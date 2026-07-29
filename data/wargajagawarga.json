@@ -1,0 +1,307 @@
+{
+  "version": 1,
+  "stats": {
+    "wargaTerdaftar": 156,
+    "klasterTerhubung": 5,
+    "satpamAktif": 12,
+    "platformTerpadu": 1,
+    "activeIncidentsCount": 1,
+    "resolvedIncidentsCount": 42,
+    "averageResponseTimeMin": 2.4
+  },
+  "users": [
+    {
+      "id": "usr-1",
+      "name": "Bambang Sutanto",
+      "role": "WARGA",
+      "block": "Blok C-12",
+      "phone": "0812-3456-7890",
+      "cluster": "Klaster Kebayoran Baru",
+      "status": "AMAN",
+      "avatar": "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80",
+      "bio": "Warga aktif - Blok C-12 (Testimoni: \"Dalam 3 menit, tiga tetangga sudah di depan rumah.\")",
+      "isOnline": true
+    },
+    {
+      "id": "usr-2",
+      "name": "Rina Wijaya",
+      "role": "ADMIN",
+      "block": "Blok A-01",
+      "phone": "0811-2233-4455",
+      "cluster": "Klaster Menteng Asri",
+      "status": "AMAN",
+      "avatar": "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=150&auto=format&fit=crop&q=80",
+      "bio": "Ibu RT 04, Menteng (Testimoni: \"Cukup satu aplikasi yang menyatukan seluruh klaster kami.\")",
+      "isOnline": true
+    },
+    {
+      "id": "usr-3",
+      "name": "Sari Dewi",
+      "role": "WARGA",
+      "block": "Blok B-05",
+      "phone": "0813-8899-0011",
+      "cluster": "Klaster Kelapa Gading",
+      "status": "AMAN",
+      "avatar": "https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=150&auto=format&fit=crop&q=80",
+      "bio": "Ibu Rumah Tangga dengan 2 anak kecil (Testimoni: \"Tidur lebih tenang sejak pakai WargaJagaWarga.\")",
+      "isOnline": false
+    },
+    {
+      "id": "usr-4",
+      "name": "Hendra Gunawan",
+      "role": "WARGA",
+      "block": "Blok C-03",
+      "phone": "0815-4433-2211",
+      "cluster": "Klaster Menteng Asri",
+      "status": "SIAGA",
+      "avatar": "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150&auto=format&fit=crop&q=80",
+      "bio": "Anggota Karang Taruna Klaster Menteng Asri",
+      "isOnline": true
+    },
+    {
+      "id": "usr-5",
+      "name": "Linda Kusuma",
+      "role": "WARGA",
+      "block": "Blok A-06",
+      "phone": "0816-7788-9900",
+      "cluster": "Klaster Menteng Asri",
+      "status": "AMAN",
+      "avatar": "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80",
+      "bio": "Dokter Umum - Warga Siaga Medis",
+      "isOnline": true
+    },
+    {
+      "id": "usr-6",
+      "name": "Aditya Pratama",
+      "role": "WARGA",
+      "block": "Blok B-02",
+      "phone": "0812-9988-7766",
+      "cluster": "Klaster Menteng Asri",
+      "status": "AMAN",
+      "avatar": "https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=150&auto=format&fit=crop&q=80",
+      "bio": "Warga - Blok B-02",
+      "isOnline": false
+    },
+    {
+      "id": "sat-1",
+      "name": "Pak Yanto",
+      "role": "SATPAM",
+      "block": "Pos Satpam Gerbang Utama",
+      "phone": "0852-1111-2222",
+      "cluster": "Klaster Menteng Asri",
+      "status": "SIAGA_DI_POS",
+      "avatar": "https://images.unsplash.com/photo-1566492031773-4f4e44671857?w=150&auto=format&fit=crop&q=80",
+      "bio": "Komandan Regu (Danru) Satpam - Pengalaman 8 tahun keamanan perumahan",
+      "isOnline": true
+    },
+    {
+      "id": "sat-2",
+      "name": "Pak Budi Santoso",
+      "role": "SATPAM",
+      "block": "Sektor Barat (Blok B)",
+      "phone": "0852-3333-4444",
+      "cluster": "Klaster Menteng Asri",
+      "status": "PATROLI",
+      "avatar": "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=150&auto=format&fit=crop&q=80",
+      "bio": "Satpam Patroli Sektor Barat - Siaga 24 Jam",
+      "isOnline": true
+    },
+    {
+      "id": "sat-3",
+      "name": "Pak Suparno",
+      "role": "SATPAM",
+      "block": "Sektor Timur (Blok C)",
+      "phone": "0852-5555-6666",
+      "cluster": "Klaster Menteng Asri",
+      "status": "MERESPONS",
+      "avatar": "https://images.unsplash.com/photo-1492562080023-ab3db95bfbce?w=150&auto=format&fit=crop&q=80",
+      "bio": "Satpam Patroli Sektor Timur - Respons Cepat Darurat",
+      "isOnline": true
+    },
+    {
+      "id": "sat-4",
+      "name": "Pak Dedi Hermawan",
+      "role": "SATPAM",
+      "block": "Pos Satpam Cadangan",
+      "phone": "0852-7777-8888",
+      "cluster": "Klaster Kebayoran Baru",
+      "status": "SIAGA_DI_POS",
+      "avatar": "https://images.unsplash.com/photo-1522075469751-3a6694fb2f61?w=150&auto=format&fit=crop&q=80",
+      "bio": "Satpam Gerbang Kebayoran Baru",
+      "isOnline": false
+    }
+  ],
+  "incidents": [
+    {
+      "id": "inc-101",
+      "type": "KEAMANAN",
+      "title": "Suara Mencurigakan di Belakang Rumah",
+      "description": "Malam ini listrik sempat berkedip dan terdengar suara langkah orang di dekat pagar belakang rumah. Mohon bantuan pengecekan Satpam & Warga sekitar!",
+      "status": "MERESPONS",
+      "reporterId": "usr-1",
+      "reporterName": "Bambang Sutanto",
+      "block": "Blok C-12",
+      "cluster": "Klaster Kebayoran Baru",
+      "createdAt": "2026-07-28T17:06:38.341Z",
+      "responders": [
+        {
+          "userId": "sat-3",
+          "name": "Pak Suparno",
+          "role": "SATPAM",
+          "respondedAt": "2026-07-28T17:08:38.342Z",
+          "status": "TIBA_DI_LOKASI"
+        },
+        {
+          "userId": "usr-4",
+          "name": "Hendra Gunawan",
+          "role": "WARGA",
+          "respondedAt": "2026-07-28T17:09:38.342Z",
+          "status": "MELUNCUR"
+        },
+        {
+          "userId": "sat-1",
+          "name": "Pak Yanto",
+          "role": "SATPAM",
+          "respondedAt": "2026-07-28T17:10:38.342Z",
+          "status": "MEMERIKSA"
+        }
+      ],
+      "comments": [
+        {
+          "id": "com-1",
+          "userId": "sat-3",
+          "userName": "Pak Suparno",
+          "userRole": "SATPAM",
+          "text": "Saya sudah tiba di halaman belakang Blok C-12, sedang memeriksa area pagar.",
+          "createdAt": "2026-07-28T17:08:38.342Z"
+        },
+        {
+          "id": "com-2",
+          "userId": "usr-4",
+          "userName": "Hendra Gunawan",
+          "userRole": "WARGA",
+          "text": "Saya dari Blok C-03 menuju kesana dengan senter, lampu jalan belakang sudah dinyalakan.",
+          "createdAt": "2026-07-28T17:09:38.342Z"
+        },
+        {
+          "id": "com-3",
+          "userId": "usr-1",
+          "userName": "Bambang Sutanto",
+          "userRole": "WARGA",
+          "text": "Terima kasih Pak Suparno dan Pak Hendra, saya standby di pintu belakang.",
+          "createdAt": "2026-07-28T17:10:38.342Z"
+        }
+      ],
+      "coordinates": {
+        "x": 75,
+        "y": 70
+      },
+      "responseTimeMinutes": 2
+    },
+    {
+      "id": "inc-102",
+      "type": "LISTRIK",
+      "title": "Kabel Listrik Korsleting Depan Taman",
+      "description": "Ada percikan api kecil dari tiang listrik dekat Blok B-05. Listrik sebagian blok padam sesaat.",
+      "status": "SELESAI",
+      "reporterId": "usr-3",
+      "reporterName": "Sari Dewi",
+      "block": "Blok B-05",
+      "cluster": "Klaster Kelapa Gading",
+      "createdAt": "2026-07-27T17:12:38.342Z",
+      "resolvedAt": "2026-07-27T17:27:38.342Z",
+      "responders": [
+        {
+          "userId": "sat-1",
+          "name": "Pak Yanto",
+          "role": "SATPAM",
+          "respondedAt": "2026-07-27T17:14:38.342Z",
+          "status": "TIBA_DI_LOKASI"
+        }
+      ],
+      "comments": [
+        {
+          "id": "com-4",
+          "userId": "sat-1",
+          "userName": "Pak Yanto",
+          "userRole": "SATPAM",
+          "text": "Sudah diamankan dengan APAR pos dan PLN sudah dihubungi. Situasi aman terkendali.",
+          "createdAt": "2026-07-27T17:24:38.342Z"
+        }
+      ],
+      "coordinates": {
+        "x": 45,
+        "y": 55
+      },
+      "responseTimeMinutes": 2
+    },
+    {
+      "id": "inc-103",
+      "type": "MEDIS",
+      "title": "Warga Butuh Bantuan Ambulans Darurat",
+      "description": "Orang tua di rumah mengalami sesak napas mendadak. Butuh pendampingan medis dan pembukaan gerbang untuk ambulans.",
+      "status": "SELESAI",
+      "reporterId": "usr-5",
+      "reporterName": "Linda Kusuma",
+      "block": "Blok A-06",
+      "cluster": "Klaster Menteng Asri",
+      "createdAt": "2026-07-25T17:12:38.342Z",
+      "resolvedAt": "2026-07-25T17:37:38.342Z",
+      "responders": [
+        {
+          "userId": "sat-2",
+          "name": "Pak Budi Santoso",
+          "role": "SATPAM",
+          "respondedAt": "2026-07-25T17:14:38.342Z",
+          "status": "TIBA_DI_LOKASI"
+        },
+        {
+          "userId": "usr-2",
+          "name": "Rina Wijaya",
+          "role": "ADMIN",
+          "respondedAt": "2026-07-25T17:15:38.342Z",
+          "status": "TIBA_DI_LOKASI"
+        }
+      ],
+      "comments": [
+        {
+          "id": "com-5",
+          "userId": "usr-2",
+          "userName": "Rina Wijaya",
+          "userRole": "ADMIN",
+          "text": "Gerbang utama sudah diprioritaskan buka, ambulans sudah masuk dan mengantar pasien dengan lancar.",
+          "createdAt": "2026-07-25T17:32:38.342Z"
+        }
+      ],
+      "coordinates": {
+        "x": 20,
+        "y": 30
+      },
+      "responseTimeMinutes": 2
+    }
+  ],
+  "contacts": [
+    {
+      "id": "cont-1",
+      "name": "Hadi Gunawan",
+      "email": "hadi.gunawan@gmail.com",
+      "phone": "0812-4567-8901",
+      "message": "Halo tim WargaJagaWarga, saya Ketua RT 05 di BSD City. Kami ingin menginstall sistem ini untuk 45 kepala keluarga di klaster kami.",
+      "inquiryType": "Cara daftar komunitas",
+      "communityName": "Klaster Pesona BSD",
+      "createdAt": "2026-07-28T12:12:38.342Z",
+      "status": "DIPROSES"
+    },
+    {
+      "id": "cont-2",
+      "name": "Ibu Maya Lestari",
+      "email": "maya.lestari@yahoo.com",
+      "phone": "0813-1122-3344",
+      "message": "Apakah aplikasi bisa terhubung langsung dengan pos keamanan 24 jam dan CCTV lingkungan?",
+      "inquiryType": "Fitur keamanan",
+      "communityName": "Perumahan Puri Indah",
+      "createdAt": "2026-07-27T17:12:38.342Z",
+      "status": "SELESAI"
+    }
+  ]
+}
