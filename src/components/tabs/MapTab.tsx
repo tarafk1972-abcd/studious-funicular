@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   ShieldAlert,
   Navigation,
@@ -57,14 +57,31 @@ export const MapTab: React.FC<MapTabProps> = ({
   // Status penandaan lokasi rumah via GPS smartphone
   const [gpsStatus, setGpsStatus] = useState<'idle' | 'locating' | 'done' | 'error'>('idle');
   const [gpsMessage, setGpsMessage] = useState<string>('');
+  // SATU TITIK: lokasi HP yang sedang membuka aplikasi (GPS pantau langsung)
+  const [myLiveLocation, setMyLiveLocation] = useState<{ lat: number; lng: number } | null>(null);
+  // Mode warga menentukan sendiri lokasi rumah dengan klik peta
+  const [isSetHomeMode, setIsSetHomeMode] = useState(false);
 
-  // ===== LOKASI RUMAH DARI GPS SMARTPHONE =====
-  // Lokasi HP yang sedang dipakai membuka peta dijadikan lokasi rumah anggota
+  // Pantau posisi GPS HP secara langsung selama peta terbuka
+  useEffect(() => {
+    if (!('geolocation' in navigator)) return;
+    const watchId = navigator.geolocation.watchPosition(
+      (pos) => setMyLiveLocation({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
+      () => {
+        /* izin ditolak / GPS mati — titik posisi HP tidak ditampilkan */
+      },
+      { enableHighAccuracy: true, maximumAge: 10000 }
+    );
+    return () => navigator.geolocation.clearWatch(watchId);
+  }, []);
+
+  // ===== WARGA MENENTUKAN SENDIRI LOKASI RUMAHNYA =====
+  // Pilihan 1: pakai posisi GPS HP saat ini
   const handleMarkMyHome = () => {
     if (!currentUser || !onSetHomeLocation) return;
     if (!('geolocation' in navigator)) {
       setGpsStatus('error');
-      setGpsMessage('GPS tidak tersedia di perangkat ini.');
+      setGpsMessage('GPS tidak tersedia di perangkat ini. Gunakan mode "Klik Peta" untuk menentukan rumah.');
       return;
     }
     setGpsStatus('locating');
@@ -81,8 +98,8 @@ export const MapTab: React.FC<MapTabProps> = ({
         setGpsStatus('error');
         setGpsMessage(
           err.code === err.PERMISSION_DENIED
-            ? 'Izin lokasi ditolak. Aktifkan izin lokasi browser/HP lalu coba lagi.'
-            : 'Gagal mengambil posisi GPS. Coba lagi di tempat terbuka.'
+            ? 'Izin lokasi ditolak. Gunakan mode "Klik Peta" untuk menentukan lokasi rumah Anda sendiri.'
+            : 'Gagal mengambil posisi GPS. Coba lagi, atau tentukan lokasi rumah dengan klik peta.'
         );
       },
       { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 }
@@ -152,26 +169,39 @@ export const MapTab: React.FC<MapTabProps> = ({
         </div>
 
         <div className="flex flex-wrap items-center gap-3">
-          {/* TANDAI RUMAH SAYA: lokasi HP (GPS) menjadi lokasi rumah di peta */}
+          {/* WARGA MENENTUKAN SENDIRI LOKASI RUMAHNYA */}
           {currentUser && onSetHomeLocation && (
-            <button
-              onClick={handleMarkMyHome}
-              disabled={gpsStatus === 'locating'}
-              className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center space-x-2 border ${
-                gpsStatus === 'done'
-                  ? 'bg-indigo-600 border-indigo-500 text-white'
-                  : 'bg-indigo-500/10 border-indigo-500/30 text-indigo-500 hover:bg-indigo-500/20'
-              } disabled:opacity-60`}
-            >
-              <Navigation className={`w-4 h-4 ${gpsStatus === 'locating' ? 'animate-spin' : ''}`} />
-              <span>
-                {gpsStatus === 'locating'
-                  ? 'Mencari GPS...'
-                  : gpsStatus === 'done'
-                  ? '🏡 Rumah Ditandai'
-                  : '🏡 Tandai Rumah Saya (GPS HP)'}
-              </span>
-            </button>
+            <>
+              <button
+                onClick={handleMarkMyHome}
+                disabled={gpsStatus === 'locating'}
+                title="Pakai posisi GPS HP saat ini sebagai lokasi rumah"
+                className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center space-x-2 border ${
+                  gpsStatus === 'done'
+                    ? 'bg-indigo-600 border-indigo-500 text-white'
+                    : 'bg-indigo-500/10 border-indigo-500/30 text-indigo-500 hover:bg-indigo-500/20'
+                } disabled:opacity-60`}
+              >
+                <Navigation className={`w-4 h-4 ${gpsStatus === 'locating' ? 'animate-spin' : ''}`} />
+                <span>
+                  {gpsStatus === 'locating'
+                    ? 'Mencari GPS...'
+                    : '🏡 Rumah = Posisi HP Saya'}
+                </span>
+              </button>
+              <button
+                onClick={() => setIsSetHomeMode(!isSetHomeMode)}
+                title="Tentukan sendiri lokasi rumah dengan klik pada peta"
+                className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center space-x-2 border ${
+                  isSetHomeMode
+                    ? 'bg-emerald-600 border-emerald-500 text-white shadow-lg'
+                    : 'bg-emerald-500/10 border-emerald-500/30 text-emerald-500 hover:bg-emerald-500/20'
+                }`}
+              >
+                <MapPin className="w-4 h-4" />
+                <span>{isSetHomeMode ? 'Klik Peta untuk Rumah...' : '🏡 Rumah = Klik Peta'}</span>
+              </button>
+            </>
           )}
 
           {isAdminOrSuper && (
@@ -352,12 +382,16 @@ export const MapTab: React.FC<MapTabProps> = ({
           <div className="flex flex-wrap items-center justify-between gap-3 pb-6 border-b border-slate-800 text-xs text-slate-400">
             <div className="flex items-center space-x-4">
               <div className="flex items-center space-x-1.5">
-                <span className="w-3 h-3 rounded-full bg-emerald-500" />
-                <span>Rumah Warga</span>
+                <span className="w-3 h-3 rounded-full bg-blue-500" />
+                <span className="text-blue-300">Posisi HP Saya</span>
               </div>
               <div className="flex items-center space-x-1.5">
                 <span className="w-3 h-3 rounded-full bg-red-500 animate-ping" />
-                <span className="text-red-400 font-bold">Darurat SOS</span>
+                <span className="text-red-400 font-bold">Lokasi Minta Bantuan (SOS)</span>
+              </div>
+              <div className="flex items-center space-x-1.5">
+                <span className="w-3 h-3 rounded-full bg-indigo-400" />
+                <span className="text-indigo-300">Rumah Saya</span>
               </div>
               <div className="flex items-center space-x-1.5">
                 <span className="w-3 h-3 rounded-full bg-amber-400" />
@@ -365,7 +399,7 @@ export const MapTab: React.FC<MapTabProps> = ({
               </div>
             </div>
             <span className="text-[11px] text-slate-500 italic">
-              *Klik ikon pada peta untuk melihat keterangan dan memicu darurat SOS
+              *Peta bersih tanpa titik alamat rumah — hanya posisi HP, SOS, rumah sendiri & pos satpam
             </span>
           </div>
 
@@ -376,10 +410,11 @@ export const MapTab: React.FC<MapTabProps> = ({
               const markers: OsmMarker[] = [];
               const isSatpamView = currentUser?.role === 'SATPAM';
 
+              // Hanya POS SATPAM & fasilitas penting yang tampil sebagai marker area.
+              // TIDAK ADA titik-titik alamat rumah warga di peta.
               mapAreas.forEach((area) => {
                 const incident = getHouseIncident(area.blockName);
                 if (filterType === 'ACTIVE_ONLY' && !incident) return;
-                const isSelected = selectedUnit?.id === area.id;
                 const isPosSatpam = area.type === 'POS_SATPAM';
 
                 // Satpam: begitu tahu nomor rumah, langsung ingat nama pemilik rumah
@@ -397,66 +432,69 @@ export const MapTab: React.FC<MapTabProps> = ({
                     tooltip: ownerLabel,
                     html: `<div style="width:30px;height:30px;border-radius:50%;background:#f59e0b;border:3px solid #fff;display:flex;align-items:center;justify-content:center;box-shadow:0 3px 10px rgba(0,0,0,.45);font-size:14px;">🛡️</div>`,
                   });
-                  return;
                 }
+                // Rumah warga TIDAK ditampilkan sebagai titik di peta
+              });
 
-                // TANPA KOTAK NOMOR RUMAH — hanya titik kecil di lokasi;
-                // detail blok & pemilik muncul saat disentuh/diklik
-                const dotColor =
-                  area.type === 'CCTV' ? '#06b6d4' : area.type === 'TAMAN' ? '#22c55e' : '#10b981';
-
-                if (incident) {
-                  // Darurat: titik merah besar berdenyut
-                  markers.push({
-                    id: area.id,
-                    x: area.x,
-                    y: area.y,
-                    iconSize: [34, 34],
-                    zIndexOffset: 800,
-                    tooltip: `🚨 DARURAT! ${ownerLabel}`,
-                    html: `<div style="position:relative;width:34px;height:34px;display:flex;align-items:center;justify-content:center;">
-                      <span style="position:absolute;inset:0;border-radius:50%;background:#ef4444;opacity:.4;animation:wjwPulse 1s infinite;"></span>
-                      <span style="position:relative;width:22px;height:22px;border-radius:50%;background:#dc2626;border:3px solid #fff;display:flex;align-items:center;justify-content:center;font-size:11px;box-shadow:0 3px 10px rgba(0,0,0,.5);">🚨</span>
-                    </div>`,
-                  });
-                  return;
+              // ===== SATU TITIK: LOKASI HP YANG MEMINTA BANTUAN (SOS) =====
+              // Prioritas: lokasi GPS HP pelapor; fallback koordinat blok
+              activeIncidents.forEach((inc) => {
+                let x: number, y: number;
+                if (inc.reporterLat !== undefined && inc.reporterLng !== undefined) {
+                  const xy = latLngToXY(inc.reporterLat, inc.reporterLng, geoArea);
+                  x = xy.x;
+                  y = xy.y;
+                } else {
+                  x = inc.coordinates.x;
+                  y = inc.coordinates.y;
                 }
-
+                const area = mapAreas.find((a) => a.blockName === inc.block);
+                const ownerInfo =
+                  isSatpamView && area ? ` • Pemilik: ${area.description}` : '';
                 markers.push({
-                  id: area.id,
-                  x: area.x,
-                  y: area.y,
-                  iconSize: isSelected ? [20, 20] : [14, 14],
-                  zIndexOffset: isSelected ? 600 : 0,
-                  tooltip: ownerLabel,
-                  html: isSelected
-                    ? `<div style="width:20px;height:20px;border-radius:50%;background:${dotColor};border:4px solid #fff;box-shadow:0 0 0 3px ${dotColor}66,0 3px 8px rgba(0,0,0,.5);"></div>`
-                    : `<div style="width:14px;height:14px;border-radius:50%;background:${dotColor};border:2.5px solid #fff;box-shadow:0 2px 6px rgba(0,0,0,.45);"></div>`,
+                  id: `sos-${inc.id}`,
+                  x,
+                  y,
+                  iconSize: [38, 38],
+                  zIndexOffset: 900,
+                  tooltip: `🚨 MINTA BANTUAN: ${inc.title} — ${inc.reporterName} (${inc.block})${ownerInfo}`,
+                  html: `<div style="position:relative;width:38px;height:38px;display:flex;align-items:center;justify-content:center;">
+                    <span style="position:absolute;inset:0;border-radius:50%;background:#ef4444;opacity:.4;animation:wjwPulse 1s infinite;"></span>
+                    <span style="position:relative;width:24px;height:24px;border-radius:50%;background:#dc2626;border:3px solid #fff;display:flex;align-items:center;justify-content:center;font-size:12px;box-shadow:0 3px 10px rgba(0,0,0,.5);">🚨</span>
+                  </div>`,
                 });
               });
 
-              // LOKASI RUMAH ANGGOTA dari GPS smartphone masing-masing
-              users
-                .filter((u) => u.homeLat !== undefined && u.homeLng !== undefined)
-                .forEach((u) => {
-                  const xy = latLngToXY(u.homeLat!, u.homeLng!, geoArea);
-                  const isMe = u.id === currentUser?.id;
-                  markers.push({
-                    id: `home-${u.id}`,
-                    x: xy.x,
-                    y: xy.y,
-                    iconSize: [26, 26],
-                    zIndexOffset: isMe ? 700 : 400,
-                    tooltip: isMe
-                      ? `🏡 Rumah Saya (${u.name}) — lokasi dari GPS HP`
-                      : isSatpamView
-                      ? `🏡 Rumah ${u.name} • ${u.block}`
-                      : `🏡 ${u.block}`,
-                    html: `<div style="width:26px;height:26px;border-radius:50%;background:${
-                      isMe ? '#6366f1' : '#8b5cf6'
-                    };border:3px solid #fff;display:flex;align-items:center;justify-content:center;font-size:12px;box-shadow:0 3px 10px rgba(0,0,0,.5);">🏡</div>`,
-                  });
+              // ===== SATU TITIK: LOKASI HP YANG SEDANG MEMBUKA APLIKASI INI =====
+              if (myLiveLocation) {
+                const xy = latLngToXY(myLiveLocation.lat, myLiveLocation.lng, geoArea);
+                markers.push({
+                  id: 'my-live-location',
+                  x: xy.x,
+                  y: xy.y,
+                  iconSize: [30, 30],
+                  zIndexOffset: 1000,
+                  tooltip: `📱 Posisi HP Saya (${currentUser?.name || 'Saya'}) — GPS langsung`,
+                  html: `<div style="position:relative;width:30px;height:30px;display:flex;align-items:center;justify-content:center;">
+                    <span style="position:absolute;inset:0;border-radius:50%;background:#3b82f6;opacity:.3;animation:wjwPulse 1.5s infinite;"></span>
+                    <span style="position:relative;width:16px;height:16px;border-radius:50%;background:#2563eb;border:3px solid #fff;box-shadow:0 2px 8px rgba(0,0,0,.5);"></span>
+                  </div>`,
                 });
+              }
+
+              // ===== RUMAH SAYA (ditentukan sendiri oleh warga, hanya tampil untuk dirinya) =====
+              if (currentUser?.homeLat !== undefined && currentUser?.homeLng !== undefined) {
+                const xy = latLngToXY(currentUser.homeLat, currentUser.homeLng, geoArea);
+                markers.push({
+                  id: 'my-home',
+                  x: xy.x,
+                  y: xy.y,
+                  iconSize: [28, 28],
+                  zIndexOffset: 800,
+                  tooltip: `🏡 Rumah Saya — lokasi ditentukan sendiri`,
+                  html: `<div style="width:28px;height:28px;border-radius:50%;background:#6366f1;border:3px solid #fff;display:flex;align-items:center;justify-content:center;font-size:13px;box-shadow:0 3px 10px rgba(0,0,0,.5);">🏡</div>`,
+                });
+              }
 
               return (
                 <OsmMapLazy
@@ -468,25 +506,36 @@ export const MapTab: React.FC<MapTabProps> = ({
                     const area = mapAreas.find((a) => a.id === id);
                     if (area) setSelectedUnit(area);
                   }}
-                  onMapClick={
-                    isAdminOrSuper
-                      ? (xy) => {
-                          if (isAdminManageMode) {
-                            setNewX(Math.round(xy.x));
-                            setNewY(Math.round(xy.y));
-                          }
-                          // Simpan juga sebagai kandidat pusat area peta offline
-                          const [lat, lng] = xyToLatLng(xy.x, xy.y, geoArea);
-                          setPendingCenter({ lat, lng });
-                        }
-                      : undefined
-                  }
+                  onMapClick={(xy) => {
+                    const [lat, lng] = xyToLatLng(xy.x, xy.y, geoArea);
+                    // Mode warga menentukan sendiri lokasi rumahnya (klik peta)
+                    if (isSetHomeMode && onSetHomeLocation) {
+                      onSetHomeLocation(lat, lng).then(() => {
+                        setIsSetHomeMode(false);
+                        setGpsStatus('done');
+                        setGpsMessage(
+                          `Lokasi rumah Anda ditentukan sendiri via klik peta (${lat.toFixed(5)}, ${lng.toFixed(5)}).`
+                        );
+                      });
+                      return;
+                    }
+                    if (isAdminOrSuper) {
+                      if (isAdminManageMode) {
+                        setNewX(Math.round(xy.x));
+                        setNewY(Math.round(xy.y));
+                      }
+                      // Simpan juga sebagai kandidat pusat area peta offline
+                      setPendingCenter({ lat, lng });
+                    }
+                  }}
                   clickHint={
-                    isAdminManageMode && isAdminOrSuper
+                    isSetHomeMode
+                      ? '🏡 KLIK PETA di posisi rumah Anda untuk menandainya'
+                      : isAdminManageMode && isAdminOrSuper
                       ? '🖱️ Klik peta untuk mengisi posisi titik baru (form Admin di atas)'
                       : isAdminOrSuper
                       ? '🖱️ Klik peta untuk memilih pusat area peta offline (panel kanan)'
-                      : '🗺️ Peta © OpenStreetMap contributors — klik ikon untuk detail'
+                      : '🗺️ Peta © OpenStreetMap contributors — 🔵 posisi HP Anda • 🚨 lokasi minta bantuan'
                   }
                 />
               );

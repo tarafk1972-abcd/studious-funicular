@@ -176,6 +176,7 @@ function HomeInner() {
 
   // Handle creating new SOS Incident
   // CATATAN: SOS TIDAK PERNAH dicek/diblokir oleh billing — keselamatan warga prioritas utama.
+  // Lokasi GPS HP pelapor ikut dikirim -> menjadi SATU titik "meminta bantuan" di peta.
   const handleCreateSOS = async (data: {
     type: EmergencyType;
     title: string;
@@ -183,6 +184,23 @@ function HomeInner() {
     block: string;
   }) => {
     if (!currentUser) return;
+
+    // Ambil lokasi GPS HP saat menekan SOS (jangan menunda pengiriman terlalu lama)
+    const gps = await new Promise<{ lat?: number; lng?: number }>((resolve) => {
+      if (!('geolocation' in navigator)) return resolve({});
+      const timer = setTimeout(() => resolve({}), 4000); // maks 4 detik, darurat tak boleh tertunda
+      navigator.geolocation.getCurrentPosition(
+        (pos) => {
+          clearTimeout(timer);
+          resolve({ lat: pos.coords.latitude, lng: pos.coords.longitude });
+        },
+        () => {
+          clearTimeout(timer);
+          resolve({});
+        },
+        { enableHighAccuracy: true, timeout: 3500, maximumAge: 30000 }
+      );
+    });
 
     try {
       const res = await fetch('/api/incidents', {
@@ -193,6 +211,8 @@ function HomeInner() {
           reporterId: currentUser.id,
           reporterName: currentUser.name,
           cluster: currentUser.cluster,
+          reporterLat: gps.lat,
+          reporterLng: gps.lng,
         }),
       });
 

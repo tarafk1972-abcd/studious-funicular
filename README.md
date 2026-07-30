@@ -53,9 +53,9 @@ Kami membangun sistem peringatan komunitas yang langsung ke pokok masalah. Satu 
 - Ikon blok rumah yang mengalami kejadian darurat menyala dengan animasi alarm sirene merah.
 - Klik ikon rumah manapun untuk memantau status atau mensimulasikan darurat di blok tersebut.
 - **Mode Admin:** klik langsung pada peta OSM untuk mengisi koordinat titik area baru secara otomatis.
-- **Marker minimalis tanpa kotak nomor:** rumah ditampilkan sebagai titik kecil berwarna di lokasi sebenarnya (bukan kotak besar berlabel nomor); nomor blok & keterangan muncul saat marker disentuh/diklik. Darurat aktif tetap tampil sebagai titik merah besar berdenyut.
-- **🏡 Lokasi rumah dari GPS smartphone:** tombol "Tandai Rumah Saya (GPS HP)" mengambil posisi GPS ponsel yang sedang dipakai membuka peta dan menetapkannya sebagai lokasi rumah anggota tersebut di peta klaster (marker 🏡 ungu, milik sendiri berwarna indigo).
-- **🛡️ Mode Satpam — ingat nama pemilik rumah:** saat satpam menyentuh titik/nomor rumah mana pun, aplikasi langsung menampilkan **nama pemilik rumah** ("Pemilik: …") di tooltip dan panel detail, membantu satpam mengingat setiap kepala keluarga dari nomor rumahnya.
+- **Marker minimalis — peta bersih:** TIDAK ada titik-titik alamat rumah warga di peta. Yang tampil hanya: **🔵 satu titik posisi HP yang sedang membuka aplikasi** (GPS live via `watchPosition`), **🚨 satu titik lokasi HP yang meminta bantuan SOS** (GPS pelapor saat menekan tombol darurat, fallback koordinat blok), **🏡 rumah sendiri** (hanya terlihat oleh pemiliknya), dan **🛡️ pos satpam**.
+- **🏡 Warga menentukan sendiri lokasi rumahnya:** dua pilihan — tombol "Rumah = Posisi HP Saya" (pakai GPS saat ini) atau "Rumah = Klik Peta" (klik langsung di posisi rumah pada peta). Lokasi rumah hanya ditampilkan kepada pemiliknya sendiri.
+- **🛡️ Mode Satpam — ingat nama pemilik rumah:** saat satpam menyentuh titik SOS atau pos, aplikasi menampilkan **nama pemilik rumah** dari nomor bloknya, membantu satpam mengingat setiap kepala keluarga.
 - Peta patroli QR (tab Patroli QR) juga memakai OpenStreetMap: lingkaran radius titik patroli digambar dalam meter sebenarnya, dan posisi GPS satpam disimulasikan dengan klik peta.
 - **🔽 Peta Offline Klaster (ditentukan Admin pertama):**
   - **Admin pertama klaster** menentukan **area peta** (titik pusat via klik peta + radius 0,2–3 km) melalui panel "Peta Offline Klaster".

@@ -15,7 +15,7 @@ export async function GET() {
 export async function POST(req: Request) {
   try {
     const body = await req.json();
-    const { type, title, description, reporterId, reporterName, block, cluster, coordinates } = body;
+    const { type, title, description, reporterId, reporterName, block, cluster, coordinates, reporterLat, reporterLng } = body;
 
     if (!type || !title || !reporterId || !block) {
       return NextResponse.json({ error: 'Missing required fields for incident' }, { status: 400 });
@@ -33,6 +33,8 @@ export async function POST(req: Request) {
       block,
       cluster: cluster || 'Klaster Menteng Asri',
       coordinates,
+      reporterLat,
+      reporterLng,
     });
 
     return NextResponse.json({ incident: newIncident }, { status: 201 });

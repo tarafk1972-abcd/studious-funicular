@@ -131,6 +131,9 @@ export interface Incident {
   responders: IncidentResponder[];
   comments: IncidentComment[];
   coordinates: { x: number; y: number };
+  // Lokasi GPS HP pelapor saat menekan tombol SOS (satu titik lokasi meminta bantuan)
+  reporterLat?: number;
+  reporterLng?: number;
   responseTimeMinutes?: number;
 }
 

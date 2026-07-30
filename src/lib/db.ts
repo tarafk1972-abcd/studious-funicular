@@ -591,6 +591,8 @@ export function createIncident(data: {
   block: string;
   cluster: string;
   coordinates?: { x: number; y: number };
+  reporterLat?: number; // lokasi GPS HP pelapor saat menekan SOS
+  reporterLng?: number;
 }): Incident {
   const state = getState();
   const newIncident: Incident = {
@@ -619,6 +621,8 @@ export function createIncident(data: {
       x: Math.floor(Math.random() * 70) + 15,
       y: Math.floor(Math.random() * 70) + 15,
     },
+    reporterLat: data.reporterLat,
+    reporterLng: data.reporterLng,
   };
 
   state.incidents.unshift(newIncident);
