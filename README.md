@@ -41,14 +41,13 @@ Kami membangun sistem peringatan komunitas yang langsung ke pokok masalah. Satu 
 - **Siaran Suara Otomatis:** Fitur pemutaran audio pengumuman darurat dan konfirmasi situasi aman.
 - **Celebration Confetti:** Animasi perayaan ketika situasi darurat telah dinyatakan **"Selesai / Situasi Aman"**.
 
-### 3. 🗺️ Peta Klaster Langsung (Interactive Cluster Map)
-- Representasi grafis klaster perumahan (*Klaster Menteng Asri / Kebayoran Baru*) yang mencakup:
-  - **Gerbang Utama & Pos Satpam 24 Jam**
-  - **Blok A (A-01 s/d A-06)**
-  - **Blok B (B-01 s/d B-06)**
-  - **Blok C (C-01 s/d C-12)**
-- Ikon blok rumah yang mengalami kejadian darurat akan menyala dengan animasi alarm sirene merah/kuning.
+### 3. 🗺️ Peta Klaster Langsung — OpenStreetMap (Interactive Cluster Map)
+- **Peta nyata OpenStreetMap** (Leaflet + react-leaflet) menggantikan peta simulasi — dengan zoom, geser, dan tile jalanan sungguhan. Data peta: © OpenStreetMap contributors.
+- Marker area klaster dirender di atas peta OSM: **Gerbang Utama & Pos Satpam 24 Jam**, **Blok A (A-01 s/d A-06)**, **Blok B (B-01 s/d B-06)**, **Blok C (C-01 s/d C-12)**, titik CCTV, dan fasilitas umum.
+- Ikon blok rumah yang mengalami kejadian darurat menyala dengan animasi alarm sirene merah.
 - Klik ikon rumah manapun untuk memantau status atau mensimulasikan darurat di blok tersebut.
+- **Mode Admin:** klik langsung pada peta OSM untuk mengisi koordinat titik area baru secara otomatis.
+- Peta patroli QR (tab Patroli QR) juga memakai OpenStreetMap: lingkaran radius titik patroli digambar dalam meter sebenarnya, dan posisi GPS satpam disimulasikan dengan klik peta.
 
 ### 4. 👥 Direktori Warga & Satpam Siaga
 - Daftar 12 Satpam aktif dengan status patroli yang dapat diubah secara langsung (*Siaga di Pos*, *Patroli Keliling*, *Merespons Darurat*, *Istirahat*).
@@ -97,6 +96,7 @@ Kami membangun sistem peringatan komunitas yang langsung ke pokok masalah. Satu 
 
 - **Framework:** [Next.js 14 App Router](https://nextjs.org/) (TypeScript, React 18)
 - **Styling & UI:** Tailwind CSS, Lucide Icons, Framer-motion inspired CSS keyframes, Canvas Confetti
+- **Peta:** OpenStreetMap via Leaflet 1.9 + react-leaflet 4 (dynamic import, tanpa SSR) — konversi koordinat unit internal ↔ lat/lng di `src/lib/geo.ts`
 - **Penyimpanan Database:** Modular persistent storage di `data/wargajagawarga.json` melalui `src/lib/db.ts`
 - **REST API Endpoints:**
   - `GET /api/state` & `POST /api/state` — Mengambil seluruh state aplikasi atau mereset ke data demo awal.

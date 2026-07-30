@@ -17,6 +17,7 @@ import {
 } from 'lucide-react';
 import { User, PatrolPoint, PatrolScan } from '@/types';
 import { useLanguage } from '@/lib/i18n';
+import { OsmMapLazy } from '@/components/OsmMapLazy';
 
 // Item antrean offline (disimpan di sisi klien sampai "online" kembali)
 interface OfflineQueueItem {
@@ -232,66 +233,66 @@ export const PatrolTab: React.FC<PatrolTabProps> = ({
       )}
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* PETA POSISI + SIMULASI GPS */}
+        {/* PETA POSISI + SIMULASI GPS (OpenStreetMap) */}
         <div className="bg-slate-900 text-white rounded-2xl border border-slate-700 p-6 space-y-4">
           <h3 className="font-bold text-sm uppercase tracking-wider text-slate-300 flex items-center space-x-2">
             <Navigation className="w-4 h-4 text-amber-400" />
             <span>Posisi GPS Saya (Simulasi) — klik peta untuk berpindah</span>
           </h3>
-          <div
-            className="relative w-full aspect-[4/3] bg-slate-800 rounded-xl border border-slate-700 overflow-hidden cursor-crosshair"
-            onClick={(e) => {
-              const rect = (e.target as HTMLElement).closest('div')!.getBoundingClientRect();
-              const x = Math.round(((e.clientX - rect.left) / rect.width) * 100);
-              const y = Math.round(((e.clientY - rect.top) / rect.height) * 100);
-              setMyPos({ x: Math.min(100, Math.max(0, x)), y: Math.min(100, Math.max(0, y)) });
-            }}
-          >
-            {/* Titik patroli + radius */}
-            {patrolPoints.map((p) => {
+          <OsmMapLazy
+            height={380}
+            zoom={16}
+            onMapClick={(xy) => setMyPos({ x: Math.round(xy.x), y: Math.round(xy.y) })}
+            clickHint="🖱️ Klik peta OpenStreetMap untuk memindahkan posisi GPS Anda"
+            circles={patrolPoints.map((p) => {
               const dist = Math.sqrt((p.x - myPos.x) ** 2 + (p.y - myPos.y) ** 2);
               const inRange = dist <= p.radius;
-              return (
-                <React.Fragment key={p.id}>
-                  {/* Lingkaran radius */}
-                  <div
-                    className={`absolute rounded-full border-2 ${
-                      inRange ? 'border-emerald-500/60 bg-emerald-500/10' : 'border-slate-600/60 bg-slate-600/10'
-                    }`}
-                    style={{
-                      left: `${p.x - p.radius}%`,
-                      top: `${p.y - p.radius * (4 / 3)}%`,
-                      width: `${p.radius * 2}%`,
-                      height: `${p.radius * 2 * (4 / 3)}%`,
-                    }}
-                  />
-                  <div
-                    className="absolute -translate-x-1/2 -translate-y-1/2 flex flex-col items-center"
-                    style={{ left: `${p.x}%`, top: `${p.y}%` }}
-                  >
-                    <QrCode className={`w-5 h-5 ${inRange ? 'text-emerald-400' : 'text-slate-400'}`} />
-                    <span className="text-[8px] font-bold text-slate-300 whitespace-nowrap">{p.name}</span>
-                  </div>
-                </React.Fragment>
-              );
+              return {
+                id: `circle-${p.id}`,
+                x: p.x,
+                y: p.y,
+                radiusUnits: p.radius,
+                color: inRange ? '#10b981' : '#64748b',
+                fillOpacity: inRange ? 0.15 : 0.08,
+              };
             })}
-            {/* Posisi saya */}
-            <div
-              className="absolute -translate-x-1/2 -translate-y-1/2 z-10 flex flex-col items-center"
-              style={{ left: `${myPos.x}%`, top: `${myPos.y}%` }}
-            >
-              <span className="relative flex h-4 w-4">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75" />
-                <span className="relative inline-flex rounded-full h-4 w-4 bg-amber-500 border-2 border-white" />
-              </span>
-              <span className="text-[9px] font-black text-amber-300 mt-0.5">SAYA</span>
-            </div>
-          </div>
+            markers={[
+              ...patrolPoints.map((p) => {
+                const dist = Math.sqrt((p.x - myPos.x) ** 2 + (p.y - myPos.y) ** 2);
+                const inRange = dist <= p.radius;
+                return {
+                  id: p.id,
+                  x: p.x,
+                  y: p.y,
+                  iconSize: [40, 40] as [number, number],
+                  tooltip: `${p.name} (QR: ${p.qrCode})`,
+                  html: `<div style="width:40px;height:40px;border-radius:10px;background:${
+                    inRange ? '#065f46' : 'rgba(15,23,42,.92)'
+                  };border:2px solid ${
+                    inRange ? '#10b981' : '#475569'
+                  };display:flex;align-items:center;justify-content:center;font-size:18px;box-shadow:0 3px 10px rgba(0,0,0,.4);">▣</div>`,
+                };
+              }),
+              {
+                id: 'my-position',
+                x: myPos.x,
+                y: myPos.y,
+                iconSize: [30, 30] as [number, number],
+                zIndexOffset: 1000,
+                tooltip: 'Posisi Saya (GPS simulasi)',
+                html: `<div style="position:relative;width:30px;height:30px;display:flex;align-items:center;justify-content:center;">
+                  <span style="position:absolute;width:30px;height:30px;border-radius:50%;background:#f59e0b;opacity:.35;animation:wjwPulse 1.2s infinite;"></span>
+                  <span style="position:relative;width:16px;height:16px;border-radius:50%;background:#f59e0b;border:3px solid #fff;box-shadow:0 2px 8px rgba(0,0,0,.5);"></span>
+                </div>`,
+              },
+            ]}
+          />
           <p className="text-xs text-slate-400">
             📍 Posisi: ({myPos.x}, {myPos.y}) • Titik terdekat:{' '}
             <strong className="text-slate-200">
               {nearestPoint.point ? `${nearestPoint.point.name} (jarak ${nearestPoint.dist.toFixed(1)})` : '-'}
-            </strong>
+            </strong>{' '}
+            • Peta © OpenStreetMap contributors
           </p>
         </div>
 

@@ -3,19 +3,15 @@
 import React, { useState } from 'react';
 import {
   ShieldAlert,
-  ShieldCheck,
   Navigation,
   CheckCircle2,
   Radio,
   PlusCircle,
   Trash2,
   MapPin,
-  Camera,
-  Home,
-  Shield,
-  Layers,
 } from 'lucide-react';
 import { Incident, User as UserType, ClusterBlockArea } from '@/types';
+import { OsmMapLazy, OsmMarker } from '@/components/OsmMapLazy';
 
 interface MapTabProps {
   incidents: Incident[];
@@ -82,19 +78,6 @@ export const MapTab: React.FC<MapTabProps> = ({
     });
     setNewBlockName('');
     setNewDesc('');
-  };
-
-  const getAreaIcon = (type: string) => {
-    switch (type) {
-      case 'POS_SATPAM':
-        return <Shield className="w-4 h-4 text-amber-300" />;
-      case 'CCTV':
-        return <Camera className="w-4 h-4 text-cyan-300" />;
-      case 'TAMAN':
-        return <Layers className="w-4 h-4 text-emerald-300" />;
-      default:
-        return <Home className="w-4 h-4 text-slate-300" />;
-    }
   };
 
   return (
@@ -291,114 +274,96 @@ export const MapTab: React.FC<MapTabProps> = ({
             </span>
           </div>
 
-          {/* Graphical Street Map SVG */}
-          <div className="relative w-full h-[480px] my-6 rounded-2xl bg-gradient-to-b from-slate-900 to-slate-950 border border-slate-800/80 p-6 overflow-hidden">
-            {/* Street grid background lines */}
-            <div className="absolute inset-0 opacity-10 pointer-events-none">
-              <svg className="w-full h-full" xmlns="http://www.w3.org/2000/svg">
-                <defs>
-                  <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
-                    <path d="M 40 0 L 0 0 0 40" fill="none" stroke="#fff" strokeWidth="1" />
-                  </pattern>
-                </defs>
-                <rect width="100%" height="100%" fill="url(#grid)" />
-              </svg>
-            </div>
+          {/* PETA OPENSTREETMAP KLASTER */}
+          <div className="my-6">
+            {/* Susun marker dari area yang ditentukan Admin */}
+            {(() => {
+              const markers: OsmMarker[] = [];
 
-            {/* Street labels */}
-            <div className="absolute left-4 top-5 text-[11px] font-black tracking-widest text-slate-600 uppercase">
-              JALAN MENTENG RAYA (BLOK A)
-            </div>
-            <div className="absolute left-4 top-36 text-[11px] font-black tracking-widest text-slate-600 uppercase">
-              JALAN MENTENG ASRI (BLOK B)
-            </div>
-            <div className="absolute left-4 top-64 text-[11px] font-black tracking-widest text-slate-600 uppercase">
-              JALAN KEBAYORAN UTAMA (BLOK C)
-            </div>
+              mapAreas.forEach((area) => {
+                const incident = getHouseIncident(area.blockName);
+                if (filterType === 'ACTIVE_ONLY' && !incident) return;
+                const isSelected = selectedUnit?.id === area.id;
+                const isPosSatpam = area.type === 'POS_SATPAM';
+                const shortName = area.blockName.replace('Blok ', '');
 
-            {/* Render All Monitored Areas defined by Admin */}
-            {mapAreas.map((area) => {
-              const incident = getHouseIncident(area.blockName);
-              const isSelected = selectedUnit?.id === area.id;
+                if (isPosSatpam) {
+                  markers.push({
+                    id: area.id,
+                    x: area.x,
+                    y: area.y,
+                    iconSize: [52, 52],
+                    zIndexOffset: 500,
+                    tooltip: `${area.blockName} — ${area.description}`,
+                    html: `<div style="width:52px;height:52px;border-radius:14px;background:#f59e0b;border:3px solid #fcd34d;display:flex;flex-direction:column;align-items:center;justify-content:center;box-shadow:0 4px 14px rgba(0,0,0,.45);">
+                      <span style="font-size:20px;line-height:1">🛡️</span>
+                      <span style="font-size:8px;font-weight:900;color:#1e293b;">POS</span>
+                    </div>`,
+                  });
+                  return;
+                }
 
-              if (filterType === 'ACTIVE_ONLY' && !incident) {
-                return null;
-              }
+                const emoji =
+                  area.type === 'CCTV' ? '📹' : area.type === 'TAMAN' ? '🌳' : '🏠';
+                const bg = incident
+                  ? 'background:linear-gradient(135deg,#dc2626,#be123c);border:3px solid #fff;'
+                  : isSelected
+                  ? 'background:#1e293b;border:3px solid #f87171;'
+                  : 'background:rgba(15,23,42,.92);border:2px solid #475569;';
+                const pulse = incident
+                  ? '<span style="position:absolute;top:-6px;right:-6px;width:16px;height:16px;border-radius:50%;background:#ef4444;border:2px solid #fff;animation:wjwPulse 1s infinite;"></span>'
+                  : '';
 
-              const isPosSatpam = area.type === 'POS_SATPAM';
-
-              if (isPosSatpam) {
-                return (
-                  <div
-                    key={area.id}
-                    onClick={() => setSelectedUnit(area)}
-                    style={{ left: `${area.x}%`, top: `${area.y}%` }}
-                    className="absolute -translate-x-1/2 -translate-y-1/2 flex items-center space-x-2 px-3.5 py-2 rounded-xl bg-amber-500 text-slate-950 font-black text-xs shadow-lg cursor-pointer hover:scale-105 transition-transform border-2 border-amber-300 z-20 group"
-                  >
-                    <ShieldCheck className="w-4 h-4" />
-                    <div>
-                      <p className="leading-none">{area.blockName}</p>
-                      <p className="text-[9px] font-semibold text-slate-900 mt-0.5">
-                        {area.description}
-                      </p>
-                    </div>
-                  </div>
-                );
-              }
+                markers.push({
+                  id: area.id,
+                  x: area.x,
+                  y: area.y,
+                  iconSize: [46, 46],
+                  zIndexOffset: incident ? 800 : isSelected ? 600 : 0,
+                  tooltip: `${area.blockName} — ${area.description}`,
+                  html: `<div style="position:relative;width:46px;height:46px;border-radius:12px;${bg}display:flex;flex-direction:column;align-items:center;justify-content:center;box-shadow:0 3px 10px rgba(0,0,0,.4);color:#fff;">
+                    ${pulse}
+                    <span style="font-size:15px;line-height:1">${incident ? '🚨' : emoji}</span>
+                    <span style="font-size:8.5px;font-weight:900;">${shortName}</span>
+                  </div>`,
+                });
+              });
 
               return (
-                <div
-                  key={area.id}
-                  onClick={() => setSelectedUnit(area)}
-                  style={{ left: `${area.x}%`, top: `${area.y}%` }}
-                  className={`absolute -translate-x-1/2 -translate-y-1/2 cursor-pointer transition-all duration-200 z-10 group ${
-                    isSelected ? 'scale-125 z-30' : 'hover:scale-110'
-                  }`}
-                >
-                  <div className="relative flex flex-col items-center">
-                    {/* Pulsing SOS Beacon if active incident */}
-                    {incident && (
-                      <span className="absolute -top-3 flex h-6 w-6">
-                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
-                        <span className="relative inline-flex rounded-full h-6 w-6 bg-red-600 border-2 border-white flex items-center justify-center">
-                          <ShieldAlert className="w-3.5 h-3.5 text-white" />
-                        </span>
-                      </span>
-                    )}
-
-                    {/* House Box */}
-                    <div
-                      className={`w-14 h-14 rounded-xl flex flex-col items-center justify-center border-2 shadow-lg transition-all ${
-                        incident
-                          ? 'bg-gradient-to-br from-red-600 to-rose-700 border-white text-white animate-pulse'
-                          : isSelected
-                          ? 'bg-slate-800 border-red-400 text-white shadow-red-500/20'
-                          : 'bg-slate-900/90 border-slate-700 text-slate-300 hover:border-slate-500'
-                      }`}
-                    >
-                      <p className="text-[10px] font-black tracking-tight">{area.blockName.replace('Blok ', '')}</p>
-                      <div className="mt-0.5">
-                        {incident ? (
-                          <ShieldAlert className="w-4 h-4 text-white" />
-                        ) : (
-                          getAreaIcon(area.type)
-                        )}
-                      </div>
-                    </div>
-
-                    {/* Tooltip name */}
-                    <span className="mt-1 px-1.5 py-0.5 rounded bg-slate-900/90 border border-slate-700 text-[10px] text-slate-300 whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
-                      {area.description}
-                    </span>
-                  </div>
-                </div>
+                <OsmMapLazy
+                  markers={markers}
+                  height={480}
+                  zoom={16}
+                  onMarkerClick={(id) => {
+                    const area = mapAreas.find((a) => a.id === id);
+                    if (area) setSelectedUnit(area);
+                  }}
+                  onMapClick={
+                    isAdminManageMode && isAdminOrSuper
+                      ? (xy) => {
+                          setNewX(Math.round(xy.x));
+                          setNewY(Math.round(xy.y));
+                        }
+                      : undefined
+                  }
+                  clickHint={
+                    isAdminManageMode && isAdminOrSuper
+                      ? '🖱️ Klik peta untuk mengisi posisi titik baru (form Admin di atas)'
+                      : '🗺️ Peta © OpenStreetMap contributors — klik ikon untuk detail'
+                  }
+                />
               );
-            })}
+            })()}
 
-            {/* Satpam Patrol Marker */}
-            <div className="absolute right-8 bottom-6 flex items-center space-x-2 px-3 py-1.5 rounded-lg bg-slate-800/90 border border-slate-700 text-slate-300 text-xs">
-              <Radio className="w-4 h-4 text-emerald-400 animate-pulse" />
-              <span>Patroli Satpam Sektor Timur Aktif</span>
+            {/* Satpam Patrol Info */}
+            <div className="mt-3 flex items-center justify-between text-xs text-slate-400">
+              <div className="flex items-center space-x-2">
+                <Radio className="w-4 h-4 text-emerald-400 animate-pulse" />
+                <span>Patroli Satpam Sektor Timur Aktif</span>
+              </div>
+              <span className="text-[10px]">
+                Data peta: © OpenStreetMap contributors
+              </span>
             </div>
           </div>
         </div>
