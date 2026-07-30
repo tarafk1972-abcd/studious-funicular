@@ -90,6 +90,9 @@ export interface User {
   createdAt?: string;
   language?: AppLanguage; // Bahasa pilihan saat registrasi (default: 'id')
   joinedWithCode?: string; // Kode undangan yang dipakai saat bergabung
+  // Lokasi rumah anggota — diambil dari GPS smartphone yang dipakai membuka peta
+  homeLat?: number;
+  homeLng?: number;
 }
 
 export type EmergencyType = 'KEAMANAN' | 'MEDIS' | 'KEBAKARAN' | 'LISTRIK';

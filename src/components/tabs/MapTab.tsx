@@ -13,7 +13,7 @@ import {
 import { Incident, User as UserType, ClusterBlockArea, Cluster } from '@/types';
 import { OsmMapLazy, OsmMarker } from '@/components/OsmMapLazy';
 import { OfflineMapPanel, clusterGeoArea } from '@/components/OfflineMapPanel';
-import { xyToLatLng } from '@/lib/geo';
+import { xyToLatLng, latLngToXY } from '@/lib/geo';
 
 interface MapTabProps {
   incidents: Incident[];
@@ -33,6 +33,7 @@ interface MapTabProps {
   }) => void;
   onDeleteMapArea?: (id: string) => void;
   onSetClusterMapArea?: (data: { centerLat: number; centerLng: number; radiusKm: number }) => Promise<void>;
+  onSetHomeLocation?: (lat: number, lng: number) => Promise<void>;
 }
 
 export const MapTab: React.FC<MapTabProps> = ({
@@ -47,11 +48,46 @@ export const MapTab: React.FC<MapTabProps> = ({
   onAddMapArea,
   onDeleteMapArea,
   onSetClusterMapArea,
+  onSetHomeLocation,
 }) => {
   const [selectedUnit, setSelectedUnit] = useState<ClusterBlockArea | null>(null);
   const [filterType, setFilterType] = useState<'ALL' | 'ACTIVE_ONLY'>('ALL');
   // Titik pusat area baru yang dipilih Admin lewat klik peta (untuk peta offline)
   const [pendingCenter, setPendingCenter] = useState<{ lat: number; lng: number } | null>(null);
+  // Status penandaan lokasi rumah via GPS smartphone
+  const [gpsStatus, setGpsStatus] = useState<'idle' | 'locating' | 'done' | 'error'>('idle');
+  const [gpsMessage, setGpsMessage] = useState<string>('');
+
+  // ===== LOKASI RUMAH DARI GPS SMARTPHONE =====
+  // Lokasi HP yang sedang dipakai membuka peta dijadikan lokasi rumah anggota
+  const handleMarkMyHome = () => {
+    if (!currentUser || !onSetHomeLocation) return;
+    if (!('geolocation' in navigator)) {
+      setGpsStatus('error');
+      setGpsMessage('GPS tidak tersedia di perangkat ini.');
+      return;
+    }
+    setGpsStatus('locating');
+    setGpsMessage('Mengambil posisi GPS smartphone Anda...');
+    navigator.geolocation.getCurrentPosition(
+      async (pos) => {
+        await onSetHomeLocation(pos.coords.latitude, pos.coords.longitude);
+        setGpsStatus('done');
+        setGpsMessage(
+          `Lokasi rumah ditandai dari GPS HP Anda (${pos.coords.latitude.toFixed(5)}, ${pos.coords.longitude.toFixed(5)}).`
+        );
+      },
+      (err) => {
+        setGpsStatus('error');
+        setGpsMessage(
+          err.code === err.PERMISSION_DENIED
+            ? 'Izin lokasi ditolak. Aktifkan izin lokasi browser/HP lalu coba lagi.'
+            : 'Gagal mengambil posisi GPS. Coba lagi di tempat terbuka.'
+        );
+      },
+      { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 }
+    );
+  };
 
   // Klaster milik pengguna aktif -> area peta offline yang ditentukan Admin
   const myCluster = currentUser
@@ -116,6 +152,28 @@ export const MapTab: React.FC<MapTabProps> = ({
         </div>
 
         <div className="flex flex-wrap items-center gap-3">
+          {/* TANDAI RUMAH SAYA: lokasi HP (GPS) menjadi lokasi rumah di peta */}
+          {currentUser && onSetHomeLocation && (
+            <button
+              onClick={handleMarkMyHome}
+              disabled={gpsStatus === 'locating'}
+              className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center space-x-2 border ${
+                gpsStatus === 'done'
+                  ? 'bg-indigo-600 border-indigo-500 text-white'
+                  : 'bg-indigo-500/10 border-indigo-500/30 text-indigo-500 hover:bg-indigo-500/20'
+              } disabled:opacity-60`}
+            >
+              <Navigation className={`w-4 h-4 ${gpsStatus === 'locating' ? 'animate-spin' : ''}`} />
+              <span>
+                {gpsStatus === 'locating'
+                  ? 'Mencari GPS...'
+                  : gpsStatus === 'done'
+                  ? '🏡 Rumah Ditandai'
+                  : '🏡 Tandai Rumah Saya (GPS HP)'}
+              </span>
+            </button>
+          )}
+
           {isAdminOrSuper && (
             <button
               onClick={() => setIsAdminManageMode(!isAdminManageMode)}
@@ -154,6 +212,29 @@ export const MapTab: React.FC<MapTabProps> = ({
           </button>
         </div>
       </div>
+
+      {/* STATUS GPS PENANDAAN RUMAH */}
+      {gpsMessage && (
+        <div
+          className={`p-3.5 rounded-xl border text-xs font-semibold ${
+            gpsStatus === 'error'
+              ? 'bg-red-500/10 border-red-500/40 text-red-600 dark:text-red-400'
+              : gpsStatus === 'done'
+              ? 'bg-emerald-500/10 border-emerald-500/40 text-emerald-600 dark:text-emerald-400'
+              : 'bg-indigo-500/10 border-indigo-500/40 text-indigo-600 dark:text-indigo-400'
+          }`}
+        >
+          📍 {gpsMessage}
+        </div>
+      )}
+
+      {/* CATATAN KHUSUS SATPAM: nomor rumah -> nama pemilik */}
+      {currentUser?.role === 'SATPAM' && (
+        <div className="p-3.5 rounded-xl bg-amber-500/10 border border-amber-500/40 text-xs font-semibold text-amber-700 dark:text-amber-300">
+          🛡️ Mode Satpam: sentuh/klik titik mana pun di peta — nama pemilik rumah langsung
+          ditampilkan bersama nomor bloknya, membantu Anda mengingat setiap kepala keluarga.
+        </div>
+      )}
 
       {/* MODE KELOLA AREA PETA OLEH ADMIN */}
       {isAdminManageMode && isAdminOrSuper && (
@@ -293,55 +374,89 @@ export const MapTab: React.FC<MapTabProps> = ({
             {/* Susun marker dari area yang ditentukan Admin */}
             {(() => {
               const markers: OsmMarker[] = [];
+              const isSatpamView = currentUser?.role === 'SATPAM';
 
               mapAreas.forEach((area) => {
                 const incident = getHouseIncident(area.blockName);
                 if (filterType === 'ACTIVE_ONLY' && !incident) return;
                 const isSelected = selectedUnit?.id === area.id;
                 const isPosSatpam = area.type === 'POS_SATPAM';
-                const shortName = area.blockName.replace('Blok ', '');
+
+                // Satpam: begitu tahu nomor rumah, langsung ingat nama pemilik rumah
+                const ownerLabel = isSatpamView
+                  ? `${area.blockName} • Pemilik: ${area.description}`
+                  : `${area.blockName} — ${area.description}`;
 
                 if (isPosSatpam) {
                   markers.push({
                     id: area.id,
                     x: area.x,
                     y: area.y,
-                    iconSize: [52, 52],
+                    iconSize: [30, 30],
                     zIndexOffset: 500,
-                    tooltip: `${area.blockName} — ${area.description}`,
-                    html: `<div style="width:52px;height:52px;border-radius:14px;background:#f59e0b;border:3px solid #fcd34d;display:flex;flex-direction:column;align-items:center;justify-content:center;box-shadow:0 4px 14px rgba(0,0,0,.45);">
-                      <span style="font-size:20px;line-height:1">🛡️</span>
-                      <span style="font-size:8px;font-weight:900;color:#1e293b;">POS</span>
+                    tooltip: ownerLabel,
+                    html: `<div style="width:30px;height:30px;border-radius:50%;background:#f59e0b;border:3px solid #fff;display:flex;align-items:center;justify-content:center;box-shadow:0 3px 10px rgba(0,0,0,.45);font-size:14px;">🛡️</div>`,
+                  });
+                  return;
+                }
+
+                // TANPA KOTAK NOMOR RUMAH — hanya titik kecil di lokasi;
+                // detail blok & pemilik muncul saat disentuh/diklik
+                const dotColor =
+                  area.type === 'CCTV' ? '#06b6d4' : area.type === 'TAMAN' ? '#22c55e' : '#10b981';
+
+                if (incident) {
+                  // Darurat: titik merah besar berdenyut
+                  markers.push({
+                    id: area.id,
+                    x: area.x,
+                    y: area.y,
+                    iconSize: [34, 34],
+                    zIndexOffset: 800,
+                    tooltip: `🚨 DARURAT! ${ownerLabel}`,
+                    html: `<div style="position:relative;width:34px;height:34px;display:flex;align-items:center;justify-content:center;">
+                      <span style="position:absolute;inset:0;border-radius:50%;background:#ef4444;opacity:.4;animation:wjwPulse 1s infinite;"></span>
+                      <span style="position:relative;width:22px;height:22px;border-radius:50%;background:#dc2626;border:3px solid #fff;display:flex;align-items:center;justify-content:center;font-size:11px;box-shadow:0 3px 10px rgba(0,0,0,.5);">🚨</span>
                     </div>`,
                   });
                   return;
                 }
 
-                const emoji =
-                  area.type === 'CCTV' ? '📹' : area.type === 'TAMAN' ? '🌳' : '🏠';
-                const bg = incident
-                  ? 'background:linear-gradient(135deg,#dc2626,#be123c);border:3px solid #fff;'
-                  : isSelected
-                  ? 'background:#1e293b;border:3px solid #f87171;'
-                  : 'background:rgba(15,23,42,.92);border:2px solid #475569;';
-                const pulse = incident
-                  ? '<span style="position:absolute;top:-6px;right:-6px;width:16px;height:16px;border-radius:50%;background:#ef4444;border:2px solid #fff;animation:wjwPulse 1s infinite;"></span>'
-                  : '';
-
                 markers.push({
                   id: area.id,
                   x: area.x,
                   y: area.y,
-                  iconSize: [46, 46],
-                  zIndexOffset: incident ? 800 : isSelected ? 600 : 0,
-                  tooltip: `${area.blockName} — ${area.description}`,
-                  html: `<div style="position:relative;width:46px;height:46px;border-radius:12px;${bg}display:flex;flex-direction:column;align-items:center;justify-content:center;box-shadow:0 3px 10px rgba(0,0,0,.4);color:#fff;">
-                    ${pulse}
-                    <span style="font-size:15px;line-height:1">${incident ? '🚨' : emoji}</span>
-                    <span style="font-size:8.5px;font-weight:900;">${shortName}</span>
-                  </div>`,
+                  iconSize: isSelected ? [20, 20] : [14, 14],
+                  zIndexOffset: isSelected ? 600 : 0,
+                  tooltip: ownerLabel,
+                  html: isSelected
+                    ? `<div style="width:20px;height:20px;border-radius:50%;background:${dotColor};border:4px solid #fff;box-shadow:0 0 0 3px ${dotColor}66,0 3px 8px rgba(0,0,0,.5);"></div>`
+                    : `<div style="width:14px;height:14px;border-radius:50%;background:${dotColor};border:2.5px solid #fff;box-shadow:0 2px 6px rgba(0,0,0,.45);"></div>`,
                 });
               });
+
+              // LOKASI RUMAH ANGGOTA dari GPS smartphone masing-masing
+              users
+                .filter((u) => u.homeLat !== undefined && u.homeLng !== undefined)
+                .forEach((u) => {
+                  const xy = latLngToXY(u.homeLat!, u.homeLng!, geoArea);
+                  const isMe = u.id === currentUser?.id;
+                  markers.push({
+                    id: `home-${u.id}`,
+                    x: xy.x,
+                    y: xy.y,
+                    iconSize: [26, 26],
+                    zIndexOffset: isMe ? 700 : 400,
+                    tooltip: isMe
+                      ? `🏡 Rumah Saya (${u.name}) — lokasi dari GPS HP`
+                      : isSatpamView
+                      ? `🏡 Rumah ${u.name} • ${u.block}`
+                      : `🏡 ${u.block}`,
+                    html: `<div style="width:26px;height:26px;border-radius:50%;background:${
+                      isMe ? '#6366f1' : '#8b5cf6'
+                    };border:3px solid #fff;display:flex;align-items:center;justify-content:center;font-size:12px;box-shadow:0 3px 10px rgba(0,0,0,.5);">🏡</div>`,
+                  });
+                });
 
               return (
                 <OsmMapLazy
@@ -416,7 +531,13 @@ export const MapTab: React.FC<MapTabProps> = ({
                   <h3 className="text-2xl font-black text-slate-900 dark:text-white mt-1">
                     {selectedUnit.blockName}
                   </h3>
-                  <p className="text-sm text-slate-600 dark:text-slate-400">{selectedUnit.description}</p>
+                  {currentUser?.role === 'SATPAM' ? (
+                    <p className="text-sm font-bold text-amber-600 dark:text-amber-400">
+                      👤 Pemilik Rumah: {selectedUnit.description}
+                    </p>
+                  ) : (
+                    <p className="text-sm text-slate-600 dark:text-slate-400">{selectedUnit.description}</p>
+                  )}
                 </div>
                 <button
                   onClick={() => setSelectedUnit(null)}

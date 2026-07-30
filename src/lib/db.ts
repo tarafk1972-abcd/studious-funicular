@@ -1261,3 +1261,19 @@ export function setClusterMapArea(
   saveState(state);
   return cluster;
 }
+
+// ===============================================
+// LOKASI RUMAH ANGGOTA (dari GPS smartphone)
+// Lokasi HP yang dipakai membuka peta ditetapkan sebagai
+// lokasi rumah anggota tersebut pada peta klaster.
+// ===============================================
+
+export function setUserHomeLocation(userId: string, lat: number, lng: number): User | null {
+  const state = getState();
+  const user = state.users.find((u) => u.id === userId);
+  if (!user) return null;
+  user.homeLat = lat;
+  user.homeLng = lng;
+  saveState(state);
+  return user;
+}

@@ -599,6 +599,24 @@ function HomeInner() {
     }
   };
 
+  // ===== LOKASI RUMAH DARI GPS SMARTPHONE =====
+  // Lokasi HP yang dipakai membuka peta ditetapkan sebagai lokasi rumah anggota
+  const handleSetHomeLocation = async (lat: number, lng: number) => {
+    if (!currentUser) return;
+    try {
+      const res = await fetch(`/api/users/${currentUser.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'set-home-location', lat, lng }),
+      });
+      if (res.ok) {
+        await fetchAllState();
+      }
+    } catch (err) {
+      console.error('Error setting home location:', err);
+    }
+  };
+
   const activeIncidentsCount = incidents.filter((i) => i.status !== 'SELESAI').length;
 
   // ===== PERINGATAN BILLING — HANYA UNTUK ADMIN KLASTER & SUPERADMIN =====
@@ -755,6 +773,7 @@ function HomeInner() {
             onAddMapArea={handleAddMapArea}
             onDeleteMapArea={handleDeleteMapArea}
             onSetClusterMapArea={handleSetClusterMapArea}
+            onSetHomeLocation={handleSetHomeLocation}
           />
         )}
 

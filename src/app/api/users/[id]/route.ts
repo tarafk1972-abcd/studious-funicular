@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { updateUserStatus, approveUserRole } from '@/lib/db';
+import { updateUserStatus, approveUserRole, setUserHomeLocation } from '@/lib/db';
 
 export const dynamic = 'force-dynamic';
 
@@ -14,6 +14,22 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
         return NextResponse.json({ error: 'Anggota tidak ditemukan' }, { status: 404 });
       }
       return NextResponse.json(updated);
+    }
+
+    // Tetapkan lokasi rumah anggota dari GPS smartphone yang membuka peta
+    if (body.action === 'set-home-location') {
+      const { lat, lng } = body;
+      if (typeof lat !== 'number' || typeof lng !== 'number') {
+        return NextResponse.json({ error: 'lat dan lng wajib berupa angka' }, { status: 400 });
+      }
+      const updated = setUserHomeLocation(id, lat, lng);
+      if (!updated) {
+        return NextResponse.json({ error: 'Anggota tidak ditemukan' }, { status: 404 });
+      }
+      return NextResponse.json({
+        user: updated,
+        message: 'Lokasi rumah ditetapkan dari posisi GPS smartphone Anda.',
+      });
     }
 
     if (!body.status) {
