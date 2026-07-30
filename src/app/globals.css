@@ -90,3 +90,12 @@ body {
 .leaflet-bottom {
   z-index: 10 !important;
 }
+
+/* Alarm SOS Satpam */
+@keyframes wjwFlash {
+  0%, 100% { background-color: rgba(69, 10, 10, 0.95); }
+  50% { background-color: rgba(127, 29, 29, 0.95); }
+}
+.animate-pulse-slow {
+  animation: wjwFlash 1s infinite;
+}

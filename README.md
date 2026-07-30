@@ -39,6 +39,11 @@ Kami membangun sistem peringatan komunitas yang langsung ke pokok masalah. Satu 
 - **Pengubah Peran Pengguna (Role Switcher Demo):** Gunakan aplikasi sebagai **Bambang Sutanto** (Warga), **Pak Yanto** (Kepala Satpam), atau **Rina Wijaya** (Ibu RT/Admin) dari menu dropdown di kanan atas.
 - **Riwayat Kejadian & Thread Komentar Real-time:** Warga dan satpam dapat berdiskusi memantau perkembangan situasi dan mengklik **"Saya Meluncur!"** sebagai responden di lokasi.
 - **Siaran Suara Otomatis:** Fitur pemutaran audio pengumuman darurat dan konfirmasi situasi aman.
+- **🚨 Alarm Sirine HP Satpam (Volume Paling Keras):**
+  - Saat warga menekan tombol darurat SOS, **smartphone semua Satpam yang bertugas** langsung membunyikan **sirine meraung bervolume maksimum** (Web Audio API, gain 1.0) + **getaran berulang** + layar penuh berkedip merah berisi detail kejadian.
+  - Alarm **berhenti otomatis di semua HP Satpam** begitu ada satu Satpam yang bertugas menekan tombol **"Saya Meluncur"**.
+  - Satpam berstatus **Istirahat** (tidak bertugas malam itu) tidak menerima alarm.
+  - Deteksi SOS baru mendekati real-time (polling 5 detik) — alarm menyala tanpa perlu menyentuh layar.
 - **Celebration Confetti:** Animasi perayaan ketika situasi darurat telah dinyatakan **"Selesai / Situasi Aman"**.
 
 ### 3. 🗺️ Peta Klaster Langsung — OpenStreetMap (Interactive Cluster Map)

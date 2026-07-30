@@ -4,6 +4,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import confetti from 'canvas-confetti';
 import { Navbar } from '@/components/Navbar';
 import { EmergencyBanner } from '@/components/EmergencyBanner';
+import { SatpamAlarm } from '@/components/SatpamAlarm';
 import { EmergencyModal } from '@/components/EmergencyModal';
 import { AudioPlayerModal } from '@/components/AudioPlayerModal';
 import { LandingTab } from '@/components/tabs/LandingTab';
@@ -120,6 +121,15 @@ function HomeInner() {
 
   useEffect(() => {
     fetchAllState();
+  }, [fetchAllState]);
+
+  // Polling berkala: agar HP Satpam mendeteksi SOS baru mendekati real-time
+  // (alarm sirine berbunyi otomatis walau satpam tidak menyentuh layar)
+  useEffect(() => {
+    const interval = setInterval(() => {
+      fetchAllState();
+    }, 5000);
+    return () => clearInterval(interval);
   }, [fetchAllState]);
 
   // Audio Siren chime helper using Web Audio API
@@ -796,7 +806,14 @@ function HomeInner() {
       {/* 4. FOOTER */}
       <Footer onSwitchTab={setActiveTab} />
 
-      {/* 5. MODALS */}
+      {/* 5. ALARM SOS SMARTPHONE SATPAM (volume paling keras, berhenti saat "Saya Meluncur") */}
+      <SatpamAlarm
+        incidents={incidents}
+        currentUser={currentUser}
+        onRespond={handleRespondToIncident}
+      />
+
+      {/* 6. MODALS */}
       <EmergencyModal
         isOpen={isSOSModalOpen}
         onClose={() => setIsSOSModalOpen(false)}
