@@ -2,11 +2,13 @@
 
 // ==================================================================
 // ALARM SOS UNTUK SMARTPHONE SATPAM
-// - Berbunyi dengan VOLUME PALING KERAS (gain maksimum + getaran)
-//   ketika ada warga menekan tombol darurat SOS.
-// - Alarm BERHENTI otomatis ketika ada Satpam yang bertugas menekan
-//   tombol "Saya Meluncur" (insiden mendapat responden ber-role SATPAM).
-// - Satpam berstatus ISTIRAHAT (tidak bertugas) tidak dibunyikan.
+// - SIARAN AUDIO WargaJagaWarga (sos-alert.mp3) LANGSUNG MENYALA dan
+//   diputar BERULANG-ULANG (loop) pada volume PALING KERAS di HP
+//   Satpam ketika ada warga menekan tombol darurat SOS.
+// - Siaran audio & alarm BERHENTI otomatis ketika ada Satpam yang
+//   bertugas malam itu menekan tombol "Saya Meluncur".
+// - Sirine sintetis (Web Audio API) menjadi cadangan bila file audio
+//   gagal diputar. Satpam berstatus ISTIRAHAT tidak dibunyikan.
 // ==================================================================
 
 import React, { useEffect, useRef, useState, useCallback } from 'react';
@@ -20,6 +22,7 @@ interface SatpamAlarmProps {
 }
 
 export const SatpamAlarm: React.FC<SatpamAlarmProps> = ({ incidents, currentUser, onRespond }) => {
+  const audioRef = useRef<HTMLAudioElement | null>(null);
   const ctxRef = useRef<AudioContext | null>(null);
   const nodesRef = useRef<{ osc: OscillatorNode; lfo: OscillatorNode; gain: GainNode } | null>(null);
   const vibrateRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -37,7 +40,59 @@ export const SatpamAlarm: React.FC<SatpamAlarmProps> = ({ incidents, currentUser
   const alarmActive = isOnDutySatpam && unattendedIncidents.length > 0;
   const targetIncident = unattendedIncidents[0];
 
+  // Sirine sintetis cadangan (Web Audio API)
+  const startFallbackSiren = useCallback(() => {
+    if (nodesRef.current) return;
+    try {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const Ctx = window.AudioContext || (window as any).webkitAudioContext;
+      const ctx: AudioContext = new Ctx();
+      ctxRef.current = ctx;
+
+      const osc = ctx.createOscillator();
+      osc.type = 'sawtooth';
+      osc.frequency.value = 900;
+
+      const lfo = ctx.createOscillator();
+      lfo.type = 'sine';
+      lfo.frequency.value = 1.4;
+
+      const lfoGain = ctx.createGain();
+      lfoGain.gain.value = 300;
+      lfo.connect(lfoGain);
+      lfoGain.connect(osc.frequency);
+
+      // VOLUME PALING KERAS
+      const gain = ctx.createGain();
+      gain.gain.value = 1.0;
+
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start();
+      lfo.start();
+      nodesRef.current = { osc, lfo, gain };
+
+      if (ctx.state === 'suspended') {
+        setNeedSoundPermission(true);
+        ctx.resume().then(() => setNeedSoundPermission(false)).catch(() => {});
+      }
+    } catch {
+      // AudioContext tidak tersedia
+    }
+  }, []);
+
   const stopAlarm = useCallback(() => {
+    // Hentikan siaran audio WargaJagaWarga
+    if (audioRef.current) {
+      try {
+        audioRef.current.pause();
+        audioRef.current.currentTime = 0;
+      } catch {
+        // abaikan
+      }
+      audioRef.current = null;
+    }
+    // Hentikan sirine cadangan
     if (nodesRef.current) {
       try {
         nodesRef.current.osc.stop();
@@ -70,58 +125,42 @@ export const SatpamAlarm: React.FC<SatpamAlarmProps> = ({ incidents, currentUser
   }, []);
 
   const startAlarm = useCallback(() => {
-    if (nodesRef.current) return; // sudah berbunyi
+    if (audioRef.current || nodesRef.current) return; // sudah berbunyi
+
+    // === SIARAN AUDIO WARGAJAGAWARGA: LANGSUNG MENYALA, LOOP TERUS-MENERUS ===
     try {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const Ctx = window.AudioContext || (window as any).webkitAudioContext;
-      const ctx: AudioContext = new Ctx();
-      ctxRef.current = ctx;
+      const audio = new Audio('/audio/sos-alert.mp3');
+      audio.loop = true; // diputar BERULANG-ULANG sampai satpam merespons
+      audio.volume = 1.0; // VOLUME PALING KERAS
+      audioRef.current = audio;
 
-      // Sirine meraung: oscillator sawtooth + LFO menyapu frekuensi 600-1200 Hz
-      const osc = ctx.createOscillator();
-      osc.type = 'sawtooth';
-      osc.frequency.value = 900;
+      audio
+        .play()
+        .then(() => setNeedSoundPermission(false))
+        .catch(() => {
+          // Kebijakan autoplay browser: butuh satu interaksi pengguna
+          setNeedSoundPermission(true);
+        });
 
-      const lfo = ctx.createOscillator();
-      lfo.type = 'sine';
-      lfo.frequency.value = 1.4; // kecepatan raungan sirine
-
-      const lfoGain = ctx.createGain();
-      lfoGain.gain.value = 300; // rentang sapuan frekuensi
-      lfo.connect(lfoGain);
-      lfoGain.connect(osc.frequency);
-
-      // VOLUME PALING KERAS: gain maksimum (1.0)
-      const gain = ctx.createGain();
-      gain.gain.value = 1.0;
-
-      osc.connect(gain);
-      gain.connect(ctx.destination);
-      osc.start();
-      lfo.start();
-      nodesRef.current = { osc, lfo, gain };
-
-      if (ctx.state === 'suspended') {
-        // Kebijakan autoplay browser: perlu satu interaksi pengguna
-        setNeedSoundPermission(true);
-        ctx.resume().then(() => setNeedSoundPermission(false)).catch(() => {});
-      } else {
-        setNeedSoundPermission(false);
-      }
-
-      // Getaran berulang (smartphone)
-      try {
-        navigator.vibrate?.([500, 200, 500, 200, 800]);
-        vibrateRef.current = setInterval(() => {
-          navigator.vibrate?.([500, 200, 500, 200, 800]);
-        }, 2500);
-      } catch {
-        // perangkat tanpa vibrasi
-      }
+      // Bila file audio gagal dimuat, pakai sirine sintetis cadangan
+      audio.onerror = () => {
+        audioRef.current = null;
+        startFallbackSiren();
+      };
     } catch {
-      // AudioContext tidak tersedia
+      startFallbackSiren();
     }
-  }, []);
+
+    // Getaran berulang (smartphone)
+    try {
+      navigator.vibrate?.([500, 200, 500, 200, 800]);
+      vibrateRef.current = setInterval(() => {
+        navigator.vibrate?.([500, 200, 500, 200, 800]);
+      }, 2500);
+    } catch {
+      // perangkat tanpa vibrasi
+    }
+  }, [startFallbackSiren]);
 
   // Aktifkan/matikan alarm mengikuti kondisi insiden
   useEffect(() => {
@@ -131,9 +170,6 @@ export const SatpamAlarm: React.FC<SatpamAlarmProps> = ({ incidents, currentUser
       stopAlarm();
       setNeedSoundPermission(false);
     }
-    return () => {
-      // dibersihkan saat unmount
-    };
   }, [alarmActive, startAlarm, stopAlarm]);
 
   // Bersihkan saat komponen dilepas
@@ -143,6 +179,12 @@ export const SatpamAlarm: React.FC<SatpamAlarmProps> = ({ incidents, currentUser
   useEffect(() => {
     if (!needSoundPermission) return;
     const unlock = () => {
+      if (audioRef.current) {
+        audioRef.current
+          .play()
+          .then(() => setNeedSoundPermission(false))
+          .catch(() => {});
+      }
       ctxRef.current?.resume().then(() => setNeedSoundPermission(false)).catch(() => {});
     };
     window.addEventListener('pointerdown', unlock, { once: true });
@@ -152,8 +194,9 @@ export const SatpamAlarm: React.FC<SatpamAlarmProps> = ({ incidents, currentUser
   const handleRespond = async () => {
     if (!targetIncident) return;
     setResponding(true);
-    // Menekan "SAYA MELUNCUR" -> responden SATPAM tercatat -> alarm berhenti
-    // di SEMUA smartphone satpam (kondisi alarmActive menjadi false)
+    // Menekan "SAYA MELUNCUR" -> responden SATPAM tercatat -> siaran audio
+    // & alarm berhenti di SEMUA smartphone satpam
+    stopAlarm();
     await onRespond(targetIncident.id);
     setResponding(false);
   };
@@ -172,7 +215,7 @@ export const SatpamAlarm: React.FC<SatpamAlarmProps> = ({ incidents, currentUser
 
         <div>
           <p className="text-xs font-black tracking-[0.3em] text-red-400 uppercase">
-            🚨 Alarm Darurat SOS — Volume Maksimum 🚨
+            🚨 Siaran Darurat WargaJagaWarga — Volume Maksimum 🚨
           </p>
           <h2 className="text-2xl sm:text-3xl font-black mt-2">
             {targetIncident.title}
@@ -196,20 +239,23 @@ export const SatpamAlarm: React.FC<SatpamAlarmProps> = ({ incidents, currentUser
         {/* Izin suara (kebijakan autoplay browser) */}
         {needSoundPermission ? (
           <button
-            onClick={() => ctxRef.current?.resume().then(() => setNeedSoundPermission(false))}
+            onClick={() => {
+              audioRef.current?.play().then(() => setNeedSoundPermission(false)).catch(() => {});
+              ctxRef.current?.resume().then(() => setNeedSoundPermission(false)).catch(() => {});
+            }}
             className="w-full py-3 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-black text-sm flex items-center justify-center space-x-2 transition-all"
           >
             <Volume2 className="w-5 h-5" />
-            <span>KETUK UNTUK MEMBUNYIKAN SIRINE</span>
+            <span>KETUK UNTUK MENYALAKAN SIARAN AUDIO</span>
           </button>
         ) : (
           <p className="text-[11px] text-red-300 font-bold flex items-center justify-center space-x-1.5">
             <VolumeX className="w-3.5 h-3.5 animate-pulse" />
-            <span>Sirine berbunyi di seluruh HP Satpam yang bertugas...</span>
+            <span>Siaran audio WargaJagaWarga diputar berulang-ulang sampai ada yang meluncur...</span>
           </p>
         )}
 
-        {/* TOMBOL SAYA MELUNCUR -> MENGHENTIKAN ALARM */}
+        {/* TOMBOL SAYA MELUNCUR -> MENGHENTIKAN SIARAN AUDIO & ALARM */}
         <button
           onClick={handleRespond}
           disabled={responding}
@@ -220,10 +266,12 @@ export const SatpamAlarm: React.FC<SatpamAlarmProps> = ({ incidents, currentUser
         </button>
 
         <p className="text-[10px] text-slate-500">
-          Alarm berhenti otomatis di semua HP Satpam begitu salah satu petugas menekan
-          &ldquo;Saya Meluncur&rdquo;. Satpam berstatus Istirahat tidak menerima alarm.
+          Siaran audio berhenti otomatis di semua HP Satpam begitu salah satu petugas yang
+          bertugas malam itu menekan &ldquo;Saya Meluncur&rdquo;. Satpam berstatus Istirahat
+          tidak menerima siaran.
         </p>
       </div>
     </div>
   );
 };
+

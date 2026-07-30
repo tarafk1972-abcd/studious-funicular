@@ -40,10 +40,11 @@ Kami membangun sistem peringatan komunitas yang langsung ke pokok masalah. Satu 
 - **Riwayat Kejadian & Thread Komentar Real-time:** Warga dan satpam dapat berdiskusi memantau perkembangan situasi dan mengklik **"Saya Meluncur!"** sebagai responden di lokasi.
 - **Siaran Suara Otomatis:** Fitur pemutaran audio pengumuman darurat dan konfirmasi situasi aman.
 - **🚨 Alarm Sirine HP Satpam (Volume Paling Keras):**
-  - Saat warga menekan tombol darurat SOS, **smartphone semua Satpam yang bertugas** langsung membunyikan **sirine meraung bervolume maksimum** (Web Audio API, gain 1.0) + **getaran berulang** + layar penuh berkedip merah berisi detail kejadian.
-  - Alarm **berhenti otomatis di semua HP Satpam** begitu ada satu Satpam yang bertugas menekan tombol **"Saya Meluncur"**.
-  - Satpam berstatus **Istirahat** (tidak bertugas malam itu) tidak menerima alarm.
-  - Deteksi SOS baru mendekati real-time (polling 5 detik) — alarm menyala tanpa perlu menyentuh layar.
+  - Saat warga menekan tombol darurat SOS, **siaran audio WargaJagaWarga (`sos-alert.mp3`) langsung menyala dan diputar BERULANG-ULANG (loop)** pada **volume maksimum** di smartphone semua Satpam yang bertugas + **getaran berulang** + layar penuh berkedip merah berisi detail kejadian.
+  - Siaran audio & alarm **berhenti otomatis di semua HP Satpam** begitu ada satu Satpam yang bertugas malam itu menekan tombol **"Saya Meluncur"**.
+  - Bila file audio gagal diputar, **sirine sintetis Web Audio API** (sapuan 600–1200 Hz, gain 1.0) menjadi cadangan otomatis.
+  - Satpam berstatus **Istirahat** (tidak bertugas malam itu) tidak menerima siaran.
+  - Deteksi SOS baru mendekati real-time (polling 5 detik) — siaran menyala tanpa perlu menyentuh layar.
 - **Celebration Confetti:** Animasi perayaan ketika situasi darurat telah dinyatakan **"Selesai / Situasi Aman"**.
 
 ### 3. 🗺️ Peta Klaster Langsung — OpenStreetMap (Interactive Cluster Map)
