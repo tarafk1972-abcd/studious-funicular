@@ -1232,3 +1232,32 @@ export function recordPatrolScan(data: {
   }
   return { scan };
 }
+
+// ===============================================
+// AREA PETA KLASTER (OFFLINE MAP AREA)
+// Admin pertama klaster menentukan area peta yang akan
+// ter-download ke aplikasi setiap smartphone anggota,
+// sehingga peta dapat bekerja secara offline.
+// ===============================================
+
+export function setClusterMapArea(
+  clusterId: string,
+  adminId: string,
+  mapArea: { centerLat: number; centerLng: number; radiusKm: number; minZoom?: number; maxZoom?: number }
+): Cluster | null {
+  const state = getState();
+  const cluster = state.clusters.find((c) => c.id === clusterId);
+  if (!cluster) return null;
+
+  cluster.mapArea = {
+    centerLat: mapArea.centerLat,
+    centerLng: mapArea.centerLng,
+    radiusKm: Math.min(3, Math.max(0.2, mapArea.radiusKm)), // 200 m s/d 3 km
+    minZoom: mapArea.minZoom ?? 14,
+    maxZoom: mapArea.maxZoom ?? 17,
+    definedByAdminId: adminId,
+    updatedAt: new Date().toISOString(),
+  };
+  saveState(state);
+  return cluster;
+}

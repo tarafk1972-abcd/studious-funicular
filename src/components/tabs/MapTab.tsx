@@ -10,13 +10,16 @@ import {
   Trash2,
   MapPin,
 } from 'lucide-react';
-import { Incident, User as UserType, ClusterBlockArea } from '@/types';
+import { Incident, User as UserType, ClusterBlockArea, Cluster } from '@/types';
 import { OsmMapLazy, OsmMarker } from '@/components/OsmMapLazy';
+import { OfflineMapPanel, clusterGeoArea } from '@/components/OfflineMapPanel';
+import { xyToLatLng } from '@/lib/geo';
 
 interface MapTabProps {
   incidents: Incident[];
   users: UserType[];
   mapAreas?: ClusterBlockArea[];
+  clusters?: Cluster[];
   currentUser: UserType | null;
   onSelectBlockForSOS: (blockName: string) => void;
   onRespondToIncident: (incidentId: string) => void;
@@ -29,21 +32,32 @@ interface MapTabProps {
     type: 'RUMAH' | 'POS_SATPAM' | 'CCTV' | 'TAMAN';
   }) => void;
   onDeleteMapArea?: (id: string) => void;
+  onSetClusterMapArea?: (data: { centerLat: number; centerLng: number; radiusKm: number }) => Promise<void>;
 }
 
 export const MapTab: React.FC<MapTabProps> = ({
   incidents,
   users,
   mapAreas = [],
+  clusters = [],
   currentUser,
   onSelectBlockForSOS,
   onRespondToIncident,
   onResolveIncident,
   onAddMapArea,
   onDeleteMapArea,
+  onSetClusterMapArea,
 }) => {
   const [selectedUnit, setSelectedUnit] = useState<ClusterBlockArea | null>(null);
   const [filterType, setFilterType] = useState<'ALL' | 'ACTIVE_ONLY'>('ALL');
+  // Titik pusat area baru yang dipilih Admin lewat klik peta (untuk peta offline)
+  const [pendingCenter, setPendingCenter] = useState<{ lat: number; lng: number } | null>(null);
+
+  // Klaster milik pengguna aktif -> area peta offline yang ditentukan Admin
+  const myCluster = currentUser
+    ? clusters.find((c) => c.name.toLowerCase() === currentUser.cluster.toLowerCase())
+    : undefined;
+  const geoArea = clusterGeoArea(myCluster);
 
   // Mode Pengelolaan Area Peta oleh Admin
   const [isAdminManageMode, setIsAdminManageMode] = useState(false);
@@ -332,6 +346,7 @@ export const MapTab: React.FC<MapTabProps> = ({
               return (
                 <OsmMapLazy
                   markers={markers}
+                  area={geoArea}
                   height={480}
                   zoom={16}
                   onMarkerClick={(id) => {
@@ -339,16 +354,23 @@ export const MapTab: React.FC<MapTabProps> = ({
                     if (area) setSelectedUnit(area);
                   }}
                   onMapClick={
-                    isAdminManageMode && isAdminOrSuper
+                    isAdminOrSuper
                       ? (xy) => {
-                          setNewX(Math.round(xy.x));
-                          setNewY(Math.round(xy.y));
+                          if (isAdminManageMode) {
+                            setNewX(Math.round(xy.x));
+                            setNewY(Math.round(xy.y));
+                          }
+                          // Simpan juga sebagai kandidat pusat area peta offline
+                          const [lat, lng] = xyToLatLng(xy.x, xy.y, geoArea);
+                          setPendingCenter({ lat, lng });
                         }
                       : undefined
                   }
                   clickHint={
                     isAdminManageMode && isAdminOrSuper
                       ? '🖱️ Klik peta untuk mengisi posisi titik baru (form Admin di atas)'
+                      : isAdminOrSuper
+                      ? '🖱️ Klik peta untuk memilih pusat area peta offline (panel kanan)'
                       : '🗺️ Peta © OpenStreetMap contributors — klik ikon untuk detail'
                   }
                 />
@@ -370,6 +392,20 @@ export const MapTab: React.FC<MapTabProps> = ({
 
         {/* Right Panel: Selected Area / Incident Inspector */}
         <div className="lg:col-span-4 space-y-6">
+          {/* PANEL PETA OFFLINE KLASTER (area ditentukan Admin, di-download semua anggota) */}
+          <OfflineMapPanel
+            currentUser={currentUser}
+            myCluster={myCluster}
+            pendingCenter={pendingCenter}
+            onSaveArea={
+              onSetClusterMapArea
+                ? async (data) => {
+                    await onSetClusterMapArea(data);
+                    setPendingCenter(null);
+                  }
+                : undefined
+            }
+          />
           {selectedUnit ? (
             <div className="bg-white dark:bg-slate-900 rounded-3xl p-6 border border-slate-200 dark:border-slate-800 shadow-xl space-y-5 animate-in fade-in duration-200">
               <div className="flex items-start justify-between border-b border-slate-200 dark:border-slate-800 pb-4">

@@ -15,9 +15,10 @@ import {
   PlusCircle,
   CloudUpload,
 } from 'lucide-react';
-import { User, PatrolPoint, PatrolScan } from '@/types';
+import { User, PatrolPoint, PatrolScan, Cluster } from '@/types';
 import { useLanguage } from '@/lib/i18n';
 import { OsmMapLazy } from '@/components/OsmMapLazy';
+import { clusterGeoArea } from '@/components/OfflineMapPanel';
 
 // Item antrean offline (disimpan di sisi klien sampai "online" kembali)
 interface OfflineQueueItem {
@@ -32,6 +33,7 @@ interface PatrolTabProps {
   currentUser: User | null;
   patrolPoints: PatrolPoint[];
   patrolScans: PatrolScan[];
+  clusters?: Cluster[];
   onScan: (data: {
     qrCode: string;
     coordinates: { x: number; y: number };
@@ -46,6 +48,7 @@ export const PatrolTab: React.FC<PatrolTabProps> = ({
   currentUser,
   patrolPoints,
   patrolScans,
+  clusters = [],
   onScan,
   onAddPoint,
   onDeletePoint,
@@ -71,6 +74,12 @@ export const PatrolTab: React.FC<PatrolTabProps> = ({
     currentUser?.role === 'ADMIN' ||
     currentUser?.role === 'SUPERADMIN';
   const isAdmin = currentUser?.role === 'ADMIN' || currentUser?.role === 'SUPERADMIN';
+
+  // Area peta klaster (ditentukan Admin) — dipakai peta OSM & konversi koordinat
+  const myCluster = currentUser
+    ? clusters.find((c) => c.name.toLowerCase() === currentUser.cluster.toLowerCase())
+    : undefined;
+  const geoArea = clusterGeoArea(myCluster);
 
   // Cari titik patroli terdekat dari posisi saya
   const nearestPoint = patrolPoints.reduce<{ point: PatrolPoint | null; dist: number }>(
@@ -242,6 +251,7 @@ export const PatrolTab: React.FC<PatrolTabProps> = ({
           <OsmMapLazy
             height={380}
             zoom={16}
+            area={geoArea}
             onMapClick={(xy) => setMyPos({ x: Math.round(xy.x), y: Math.round(xy.y) })}
             clickHint="🖱️ Klik peta OpenStreetMap untuk memindahkan posisi GPS Anda"
             circles={patrolPoints.map((p) => {

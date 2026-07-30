@@ -22,6 +22,18 @@ export interface ClusterBilling {
   note?: string; // Catatan Superadmin (pengawasan)
 }
 
+// Area peta klaster yang ditentukan Admin pertama — di-download ke aplikasi
+// setiap anggota agar peta dapat bekerja secara OFFLINE
+export interface ClusterMapArea {
+  centerLat: number;
+  centerLng: number;
+  radiusKm: number; // radius area dari pusat klaster
+  minZoom: number;
+  maxZoom: number;
+  definedByAdminId?: string;
+  updatedAt?: string;
+}
+
 // Cluster/klaster perumahan dengan kode undangan (Join with Code)
 export interface Cluster {
   id: string;
@@ -30,6 +42,7 @@ export interface Cluster {
   createdAt: string;
   createdByUserId?: string;
   billing: ClusterBilling;
+  mapArea?: ClusterMapArea; // Area peta offline yang ditentukan Admin
 }
 
 // ===== PATROLI QR (Satpam) =====

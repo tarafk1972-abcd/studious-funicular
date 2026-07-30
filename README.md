@@ -48,6 +48,11 @@ Kami membangun sistem peringatan komunitas yang langsung ke pokok masalah. Satu 
 - Klik ikon rumah manapun untuk memantau status atau mensimulasikan darurat di blok tersebut.
 - **Mode Admin:** klik langsung pada peta OSM untuk mengisi koordinat titik area baru secara otomatis.
 - Peta patroli QR (tab Patroli QR) juga memakai OpenStreetMap: lingkaran radius titik patroli digambar dalam meter sebenarnya, dan posisi GPS satpam disimulasikan dengan klik peta.
+- **🔽 Peta Offline Klaster (ditentukan Admin pertama):**
+  - **Admin pertama klaster** menentukan **area peta** (titik pusat via klik peta + radius 0,2–3 km) melalui panel "Peta Offline Klaster".
+  - Area tersebut tersimpan per-klaster dan **ter-download ke aplikasi setiap smartphone anggota**: tile OpenStreetMap area itu diunduh ke penyimpanan perangkat (IndexedDB, zoom 14–17, maks 300 tile).
+  - Peta memakai strategi **offline-first**: tile dibaca dari penyimpanan perangkat lebih dahulu, sehingga **peta klaster & patroli QR tetap berfungsi tanpa koneksi internet**.
+  - Anggota dapat memperbarui atau menghapus peta offline kapan saja; ukuran unduhan dan waktu unduh ditampilkan.
 
 ### 4. 👥 Direktori Warga & Satpam Siaga
 - Daftar 12 Satpam aktif dengan status patroli yang dapat diubah secara langsung (*Siaga di Pos*, *Patroli Keliling*, *Merespons Darurat*, *Istirahat*).
@@ -108,6 +113,7 @@ Kami membangun sistem peringatan komunitas yang langsung ke pokok masalah. Satu 
   - `POST /api/map-areas` & `DELETE /api/map-areas/[id]` — Admin menambah/menghapus area peta klaster.
   - `GET /api/billing` & `POST /api/billing` — Billing per-klaster: pembayaran oleh Admin (simulasi) dan aksi pengawasan Superadmin (perpanjang trial, tandai lunas, ubah nominal, tangguhkan, aktifkan).
   - `GET /api/patrol` & `POST /api/patrol` — Modul patroli QR: scan dengan validasi radius GPS + sinkronisasi offline queue, serta kelola titik patroli oleh Admin.
+  - `GET /api/cluster-map` & `POST /api/cluster-map` — Area peta offline klaster: ditentukan Admin pertama (pusat + radius), lalu di-download anggota agar peta bekerja offline.
 
 ---
 

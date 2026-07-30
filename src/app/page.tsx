@@ -463,6 +463,41 @@ function HomeInner() {
     }
   };
 
+  // ===== AREA PETA OFFLINE KLASTER =====
+  // Admin pertama klaster menentukan area peta yang ter-download ke aplikasi
+  // setiap smartphone anggota, sehingga peta dapat bekerja secara offline.
+  const handleSetClusterMapArea = async (data: {
+    centerLat: number;
+    centerLng: number;
+    radiusKm: number;
+  }) => {
+    if (!currentUser) return;
+    const myCluster = clusters.find(
+      (c) => c.name.toLowerCase() === currentUser.cluster.toLowerCase()
+    );
+    if (!myCluster) return;
+    try {
+      const res = await fetch('/api/cluster-map', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          actorId: currentUser.id,
+          clusterId: myCluster.id,
+          ...data,
+        }),
+      });
+      if (res.ok) {
+        confetti({ particleCount: 60, spread: 55, origin: { y: 0.5 } });
+        await fetchAllState();
+      } else {
+        const err = await res.json();
+        setBillingNotice(err.error || 'Gagal menetapkan area peta klaster.');
+      }
+    } catch (err) {
+      console.error('Error setting cluster map area:', err);
+    }
+  };
+
   // Handle adding Map Area by Admin
   const handleAddMapArea = async (area: {
     blockName: string;
@@ -700,6 +735,7 @@ function HomeInner() {
             incidents={incidents}
             users={users}
             mapAreas={mapAreas}
+            clusters={clusters}
             currentUser={currentUser}
             onSelectBlockForSOS={() => {
               setIsSOSModalOpen(true);
@@ -708,6 +744,7 @@ function HomeInner() {
             onResolveIncident={handleResolveIncident}
             onAddMapArea={handleAddMapArea}
             onDeleteMapArea={handleDeleteMapArea}
+            onSetClusterMapArea={handleSetClusterMapArea}
           />
         )}
 
@@ -739,6 +776,7 @@ function HomeInner() {
             currentUser={currentUser}
             patrolPoints={patrolPoints}
             patrolScans={patrolScans}
+            clusters={clusters}
             onScan={handlePatrolScan}
             onAddPoint={handleAddPatrolPoint}
             onDeletePoint={handleDeletePatrolPoint}
