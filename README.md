@@ -57,11 +57,11 @@ Kami membangun sistem peringatan komunitas yang langsung ke pokok masalah. Satu 
 - **🏡 Warga menentukan sendiri lokasi rumahnya:** dua pilihan — tombol "Rumah = Posisi HP Saya" (pakai GPS saat ini) atau "Rumah = Klik Peta" (klik langsung di posisi rumah pada peta). Lokasi rumah hanya ditampilkan kepada pemiliknya sendiri.
 - **🛡️ Mode Satpam — ingat nama pemilik rumah:** saat satpam menyentuh titik SOS atau pos, aplikasi menampilkan **nama pemilik rumah** dari nomor bloknya, membantu satpam mengingat setiap kepala keluarga.
 - Peta patroli QR (tab Patroli QR) juga memakai OpenStreetMap: lingkaran radius titik patroli digambar dalam meter sebenarnya, dan posisi GPS satpam disimulasikan dengan klik peta.
-- **🔽 Peta Offline Klaster (ditentukan Admin pertama):**
-  - **Admin pertama klaster** menentukan **area peta** (titik pusat via klik peta + radius 0,2–3 km) melalui panel "Peta Offline Klaster".
-  - Area tersebut tersimpan per-klaster dan **ter-download ke aplikasi setiap smartphone anggota**: tile OpenStreetMap area itu diunduh ke penyimpanan perangkat (IndexedDB, zoom 14–17, maks 300 tile).
-  - Peta memakai strategi **offline-first**: tile dibaca dari penyimpanan perangkat lebih dahulu, sehingga **peta klaster & patroli QR tetap berfungsi tanpa koneksi internet**.
-  - Anggota dapat memperbarui atau menghapus peta offline kapan saja; ukuran unduhan dan waktu unduh ditampilkan.
+- **🔽 Peta Offline Klaster (otomatis terpasang, tanpa tombol download):**
+  - **Admin pertama klaster** menentukan **area peta sejak awal** (titik pusat via klik peta + radius 0,2–3 km) melalui panel "Peta Offline Klaster".
+  - Peta area tersebut **OTOMATIS terpasang pada semua HP anggota klaster** begitu pendaftaran anggota **diterima oleh Admin** — tile OpenStreetMap diunduh diam-diam di latar belakang ke penyimpanan perangkat (IndexedDB, zoom 14–17, maks 300 tile) dengan indikator kecil di pojok layar. **Tidak ada tombol download manual di HP warga.**
+  - Bila Admin memperbarui area, semua HP anggota otomatis mengunduh ulang versi terbarunya.
+  - Peta memakai strategi **offline-first**: tile dibaca dari penyimpanan perangkat lebih dahulu, sehingga **peta klaster & patroli QR tetap berfungsi walau tidak terkoneksi internet**.
 
 ### 4. 👥 Direktori Warga & Satpam Siaga
 - Daftar 12 Satpam aktif dengan status patroli yang dapat diubah secara langsung (*Siaga di Pos*, *Patroli Keliling*, *Merespons Darurat*, *Istirahat*).

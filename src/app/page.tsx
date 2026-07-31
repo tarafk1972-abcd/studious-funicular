@@ -5,6 +5,7 @@ import confetti from 'canvas-confetti';
 import { Navbar } from '@/components/Navbar';
 import { EmergencyBanner } from '@/components/EmergencyBanner';
 import { SatpamAlarm } from '@/components/SatpamAlarm';
+import { OfflineMapAutoInstall } from '@/components/OfflineMapAutoInstall';
 import { EmergencyModal } from '@/components/EmergencyModal';
 import { AudioPlayerModal } from '@/components/AudioPlayerModal';
 import { LandingTab } from '@/components/tabs/LandingTab';
@@ -851,6 +852,11 @@ function HomeInner() {
         currentUser={currentUser}
         onRespond={handleRespondToIncident}
       />
+
+      {/* 5b. PEMASANGAN OTOMATIS PETA OFFLINE KLASTER
+          Area ditentukan Admin pertama; otomatis terpasang di HP anggota
+          yang pendaftarannya sudah DITERIMA — tanpa tombol download. */}
+      <OfflineMapAutoInstall currentUser={currentUser} clusters={clusters} />
 
       {/* 6. MODALS */}
       <EmergencyModal
