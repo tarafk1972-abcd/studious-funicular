@@ -127,7 +127,7 @@ export const OfflineMapPanel: React.FC<OfflineMapPanelProps> = ({
           </span>
         ) : (
           <span className="px-2 py-0.5 rounded-full text-[10px] font-black bg-amber-500/15 text-amber-500 border border-amber-500/30">
-            AREA DEFAULT (BELUM DIATUR)
+            SIMULASI: TANGERANG SELATAN (BELUM DIATUR ADMIN)
           </span>
         )}
       </div>

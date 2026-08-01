@@ -159,12 +159,18 @@ export const MapTab: React.FC<MapTabProps> = ({
             <span className="text-xs text-slate-500 dark:text-slate-400">• GPS Pemantauan Real-time</span>
           </div>
           <h2 className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white mt-1">
-            Peta Klaster Menteng Asri & Kebayoran Baru
+            Peta {currentUser?.cluster || 'Klaster'}
           </h2>
           <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400">
             {isAdminOrSuper
               ? 'Sebagai Admin, Anda dapat menentukan area dan titik yang perlu dipasangi pada aplikasi seluruh anggota.'
               : 'Pantau posisi kejadian darurat SOS dan rute pergerakan Satpam di sekitar lingkungan Anda.'}
+            {!myCluster?.mapArea && (
+              <span className="block mt-0.5 font-bold text-amber-500">
+                ⚠️ Area peta masih memakai simulasi default (Tangerang Selatan) — Admin pertama perlu
+                menentukan titik pusat area klaster yang sebenarnya.
+              </span>
+            )}
           </p>
         </div>
 

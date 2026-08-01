@@ -11,10 +11,12 @@ export interface GeoArea {
   radiusKm: number;
 }
 
-// Area default (demo): kawasan Menteng, Jakarta — dipakai bila Admin belum menentukan area
+// Area default (simulasi): kawasan TANGERANG SELATAN — dipakai bila Admin belum menentukan area.
+// Admin pertama klaster WAJIB menentukan titik pusat & radius area sebenarnya
+// melalui panel "Peta Offline Klaster" di tab Peta Klaster.
 export const DEFAULT_AREA: GeoArea = {
-  centerLat: -6.193,
-  centerLng: 106.836,
+  centerLat: -6.2884, // Tangerang Selatan (sekitar Ciputat/Serpong)
+  centerLng: 106.7181,
   radiusKm: 0.67,
 };
 
