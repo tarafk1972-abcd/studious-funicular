@@ -3,9 +3,9 @@ import { deleteMapArea } from '@/lib/db';
 
 export const dynamic = 'force-dynamic';
 
-export async function DELETE(req: Request, { params }: { params: { id: string } }) {
+export async function DELETE(req: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
-    const { id } = params;
+    const { id } = await params;
     const success = deleteMapArea(id);
     if (!success) {
       return NextResponse.json({ error: 'Area peta tidak ditemukan' }, { status: 404 });

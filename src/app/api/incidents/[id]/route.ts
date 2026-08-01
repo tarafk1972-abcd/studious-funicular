@@ -3,9 +3,9 @@ import { updateIncidentStatus, addIncidentResponder, addIncidentComment, deleteI
 
 export const dynamic = 'force-dynamic';
 
-export async function PATCH(req: Request, { params }: { params: { id: string } }) {
+export async function PATCH(req: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
-    const { id } = params;
+    const { id } = await params;
     const body = await req.json();
 
     if (body.action === 'status') {
@@ -42,9 +42,9 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
   }
 }
 
-export async function DELETE(req: Request, { params }: { params: { id: string } }) {
+export async function DELETE(req: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
-    const { id } = params;
+    const { id } = await params;
     const success = deleteIncident(id);
     if (!success) {
       return NextResponse.json({ error: 'Incident not found' }, { status: 404 });
