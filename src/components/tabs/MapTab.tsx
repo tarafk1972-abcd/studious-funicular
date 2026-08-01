@@ -90,8 +90,10 @@ export const MapTab: React.FC<MapTabProps> = ({
       async (pos) => {
         await onSetHomeLocation(pos.coords.latitude, pos.coords.longitude);
         setGpsStatus('done');
+        const akurasi = Math.round(pos.coords.accuracy || 0);
         setGpsMessage(
-          `Lokasi rumah ditandai dari GPS HP Anda (${pos.coords.latitude.toFixed(5)}, ${pos.coords.longitude.toFixed(5)}).`
+          `Lokasi rumah ditandai dari GPS HP Anda (${pos.coords.latitude.toFixed(5)}, ${pos.coords.longitude.toFixed(5)}) — akurasi ±${akurasi} meter. ` +
+            `Jika kurang tepat, gunakan tombol "Rumah = Klik Peta" lalu klik persis di atap rumah Anda.`
         );
       },
       (err) => {
