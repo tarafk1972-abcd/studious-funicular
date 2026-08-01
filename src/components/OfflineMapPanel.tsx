@@ -8,10 +8,16 @@
 // - Gunanya: peta tetap berfungsi walau tidak terkoneksi internet.
 
 import React, { useEffect, useState } from 'react';
-import { MapPinned, CheckCircle2, HardDrive, Crosshair, Clock } from 'lucide-react';
+import { MapPinned, CheckCircle2, HardDrive, Crosshair, Clock, RefreshCw } from 'lucide-react';
 import { Cluster, User } from '@/types';
 import { GeoArea, DEFAULT_AREA } from '@/lib/geo';
-import { getOfflineMeta, listTilesForArea, OfflineMapMeta } from '@/lib/offlineMap';
+import {
+  getOfflineMeta,
+  listTilesForArea,
+  OfflineMapMeta,
+  clearOfflineMap,
+  downloadAreaTiles,
+} from '@/lib/offlineMap';
 
 interface OfflineMapPanelProps {
   currentUser: User | null;
@@ -41,6 +47,9 @@ export const OfflineMapPanel: React.FC<OfflineMapPanelProps> = ({
   const [meta, setMeta] = useState<OfflineMapMeta | null>(null);
   const [radiusKm, setRadiusKm] = useState(myCluster?.mapArea?.radiusKm ?? 0.7);
   const [saving, setSaving] = useState(false);
+  // Pasang ulang peta di HP ini (khusus Admin, mis. bila data peta rusak)
+  const [reinstalling, setReinstalling] = useState(false);
+  const [reinstallProgress, setReinstallProgress] = useState<{ done: number; total: number } | null>(null);
 
   const isAdmin =
     currentUser?.role === 'ADMIN' ||
@@ -65,10 +74,33 @@ export const OfflineMapPanel: React.FC<OfflineMapPanelProps> = ({
   }, []);
 
   const handleSaveArea = async () => {
-    if (!onSaveArea || !pendingCenter) return;
+    if (!onSaveArea) return;
+    // Bila Admin tidak memilih titik baru, pakai pusat area saat ini
+    // (berguna untuk MEMAKSA pemasangan ulang di semua HP anggota tanpa mengubah area)
+    const center = pendingCenter || { lat: area.centerLat, lng: area.centerLng };
     setSaving(true);
-    await onSaveArea({ centerLat: pendingCenter.lat, centerLng: pendingCenter.lng, radiusKm });
+    await onSaveArea({ centerLat: center.lat, centerLng: center.lng, radiusKm });
     setSaving(false);
+  };
+
+  // PASANG ULANG PETA DI HP INI (khusus Admin):
+  // hapus cache tile lama -> unduh ulang seluruh tile area klaster
+  const handleReinstall = async () => {
+    if (!myCluster || reinstalling) return;
+    setReinstalling(true);
+    setReinstallProgress({ done: 0, total: tileEstimate });
+    try {
+      await clearOfflineMap();
+      const m = await downloadAreaTiles(myCluster.name, area, minZoom, maxZoom, (done, total) =>
+        setReinstallProgress({ done, total })
+      );
+      setMeta(m);
+    } catch {
+      // gagal (mis. offline) — biarkan auto-install mencoba lagi nanti
+    } finally {
+      setReinstalling(false);
+      setReinstallProgress(null);
+    }
   };
 
   const fmtSize = (bytes: number) =>
@@ -160,14 +192,50 @@ export const OfflineMapPanel: React.FC<OfflineMapPanelProps> = ({
           </div>
           <button
             onClick={handleSaveArea}
-            disabled={!pendingCenter || saving}
+            disabled={saving}
             className="w-full py-2 rounded-xl bg-purple-600 hover:bg-purple-500 text-white text-[11px] font-black uppercase tracking-wider transition-all disabled:opacity-40 flex items-center justify-center space-x-1.5"
           >
             <Crosshair className="w-3.5 h-3.5" />
             <span>
-              {saving ? 'Menyimpan...' : 'Simpan — Otomatis Terpasang di Semua HP Anggota'}
+              {saving
+                ? 'Menyimpan...'
+                : pendingCenter
+                ? 'Simpan Area Baru — Otomatis Terpasang di Semua HP Anggota'
+                : 'Simpan / Pasang Ulang ke Semua HP Anggota (Area Saat Ini)'}
             </span>
           </button>
+
+          {/* PASANG ULANG PETA (Admin): di HP ini & paksa semua HP anggota */}
+          <div className="pt-1 border-t border-purple-500/20 space-y-1.5">
+            {reinstalling && reinstallProgress ? (
+              <div className="space-y-1">
+                <div className="w-full h-2 rounded-full bg-slate-300 dark:bg-slate-700 overflow-hidden">
+                  <div
+                    className="h-full bg-purple-500 transition-all"
+                    style={{
+                      width: `${Math.round((reinstallProgress.done / Math.max(1, reinstallProgress.total)) * 100)}%`,
+                    }}
+                  />
+                </div>
+                <p className="text-[10px] font-bold text-purple-500 text-center">
+                  Memasang ulang peta... {reinstallProgress.done}/{reinstallProgress.total} tile
+                </p>
+              </div>
+            ) : (
+              <button
+                onClick={handleReinstall}
+                className="w-full py-2 rounded-xl bg-purple-500/15 hover:bg-purple-500/25 border border-purple-500/40 text-purple-500 text-[11px] font-black uppercase tracking-wider transition-all flex items-center justify-center space-x-1.5"
+              >
+                <RefreshCw className="w-3.5 h-3.5" />
+                <span>Pasang Ulang Peta di HP Ini</span>
+              </button>
+            )}
+            <p className="text-[9px] text-slate-500 leading-relaxed">
+              💡 Untuk memasang ulang di <strong>semua HP anggota</strong>: cukup tekan tombol
+              &ldquo;Simpan&rdquo; di atas (area boleh sama) — setiap HP anggota akan otomatis
+              mengunduh ulang peta versi terbaru.
+            </p>
+          </div>
         </div>
       )}
 
